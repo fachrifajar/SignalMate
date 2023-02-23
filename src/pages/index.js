@@ -5,9 +5,64 @@ import React from "react";
 //MUI
 
 import { styled } from "@mui/material/styles";
-import { Grid, Container, Typography } from "@mui/material";
+import {
+  Grid,
+  Container,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Box,
+  Avatar,
+  TextField,
+  InputAdornment,
+} from "@mui/material";
+import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
+import MenuIcon from "@mui/icons-material/Menu";
+import SettingsIcon from "@mui/icons-material/Settings";
+import ContactsIcon from "@mui/icons-material/Contacts";
+import PhoneIcon from "@mui/icons-material/Phone";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import SearchIcon from "@mui/icons-material/Search";
+import InputBase from "@mui/material/InputBase";
+import AddIcon from "@mui/icons-material/Add";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
+
+const WordBox = styled(Box)(({ theme }) => ({
+  display: "inline-block",
+  padding: "10px",
+  margin: "5px",
+  borderRadius: "10px",
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: "#7E98DF",
+    color: "white",
+  },
+  "&.active": {
+    backgroundColor: "#7E98DF",
+    color: "white",
+  },
+}));
 
 export default function Home() {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const [active, setActive] = React.useState("All");
+
+  const handleClickWord = (word) => {
+    setActive(word);
+  };
+
+  const [isClicked, setIsClicked] = React.useState(false);
   return (
     <>
       <Head>
@@ -33,17 +88,313 @@ export default function Home() {
         <Grid container height="100vh">
           <Grid
             item
-            md={2.5}
+            md={3}
             sx={{
               boxShadow: "1px 1px 5px 0px rgba(0,0,0,0.52)",
               backgroundColor: "#FFFFFF",
               height: "100vh",
             }}>
             <Container sx={{ mt: "20px" }}>
-              <Typography variant="h4" component="h2">
+              <Typography
+                variant="h4"
+                component="h2"
+                sx={{
+                  color: "#7E98DF",
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                }}>
                 SignalMate
+                <IconButton
+                  aria-label="menu"
+                  onClick={handleClick}
+                  sx={{ color: "#7E98DF", marginLeft: "auto" }}>
+                  <MenuIcon />
+                </IconButton>
+                <Menu
+                  id="simple-menu"
+                  anchorEl={anchorEl}
+                  keepMounted
+                  open={Boolean(anchorEl)}
+                  onClose={handleClose}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
+                  }}>
+                  <MenuItem onClick={handleClose}>
+                    <SettingsIcon sx={{ marginRight: "8px" }} />
+                    Settings
+                  </MenuItem>
+                  <MenuItem onClick={handleClose}>
+                    <ContactsIcon sx={{ marginRight: "8px" }} />
+                    Contacts
+                  </MenuItem>
+                  <MenuItem onClick={handleClose}>
+                    <PhoneIcon sx={{ marginRight: "8px" }} />
+                    Calls
+                  </MenuItem>
+                  <MenuItem onClick={handleClose}>
+                    <BookmarkIcon sx={{ marginRight: "8px" }} />
+                    Save Messages
+                  </MenuItem>
+                  <MenuItem onClick={handleClose}>
+                    <PersonAddIcon sx={{ marginRight: "8px" }} />
+                    Invite Friends
+                  </MenuItem>
+                </Menu>
               </Typography>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: "40px",
+                }}>
+                <InputBase
+                  placeholder="Type your message..."
+                  startAdornment={<SearchIcon />}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    backgroundColor: "#FAFAFA",
+                    borderRadius: "20px",
+                    height: "40px",
+                    maxWidth: "250px",
+                    flexGrow: 1,
+                  }}
+                  inputProps={{ "aria-label": "search" }}
+                />
+                <span
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    color: "#7E98DF",
+                    marginLeft: "auto",
+                    cursor: "pointer",
+                  }}>
+                  <AddIcon fontSize="large" />
+                </span>
+              </div>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-evenly",
+                  mt: "20px",
+                }}>
+                <WordBox
+                  className={active === "All" ? "active" : ""}
+                  onClick={() => handleClickWord("All")}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    All
+                  </Typography>
+                </WordBox>
+                <WordBox
+                  className={active === "Important" ? "active" : ""}
+                  onClick={() => handleClickWord("Important")}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    Important
+                  </Typography>
+                </WordBox>
+                <WordBox
+                  className={active === "Unread" ? "active" : ""}
+                  onClick={() => handleClickWord("Unread")}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    Unread
+                  </Typography>
+                </WordBox>
+              </Box>
+
+              <div
+                style={{
+                  width: "100%",
+                  height: "100vh",
+                  overflow: "hidden",
+                  overflowY: "scroll",
+                }}>
+                {[...new Array(15)].map((item, key) => (
+                  <Box
+                    key={key}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    padding={2}
+                    marginTop="20px"
+                    onClick={() => setIsClicked(true)}>
+                    <Box display="flex" alignItems="center">
+                      <Avatar
+                        sx={{ width: 56, height: 56, marginRight: 2 }}
+                        alt="User Avatar">
+                        J
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle1">John Doe</Typography>
+                        <Typography variant="body2">
+                          Lorem ipsum dolor sit amet
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box
+                      display="flex"
+                      flexDirection="column"
+                      alignItems="flex-end">
+                      <Typography variant="subtitle2">8:30 AM</Typography>
+                      <Box
+                        sx={{
+                          backgroundColor: "#7E98DF",
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#fff",
+                          fontSize: "0.9rem",
+                          fontWeight: "bold",
+                          marginTop: 1,
+                        }}>
+                        5
+                      </Box>
+                    </Box>
+                  </Box>
+                ))}
+                <style>
+                  {`
+      ::-webkit-scrollbar {
+        width: 0.1em;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+    `}
+                </style>
+              </div>
             </Container>
+          </Grid>
+          <Grid item md={9} sx={{ backgroundColor: "#FAFAFA" }}>
+            {!isClicked && (
+              <Typography
+                sx={{
+                  color: "#848484",
+                  display: "flex",
+                  height: "100vh",
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}>
+                Please select a chat to start messaging
+              </Typography>
+            )}
+
+            {isClicked && (
+              <React.Fragment>
+                {/* Appbar */}
+                <Box sx={{ backgroundColor: "#fff", px: 5, py: 2 }}>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Avatar
+                      alt="Bilkis"
+                      src="/static/images/avatar/1.jpg"
+                      sx={{ width: 48, height: 48 }}
+                    />
+                    <div>
+                      <Typography variant="subtitle1">Theresa Webb</Typography>
+                      <Typography
+                        sx={{ color: "#7E98DF" }}
+                        component="span"
+                        variant="body2">
+                        Online
+                      </Typography>
+                    </div>
+                  </Box>
+                </Box>
+
+                {/* Box Chat */}
+                <Box px={5} py={3} sx={{ height: "80vh", overflowY: "auto" }}>
+                  {/* Left Chat */}
+                  {[...new Array(5)].map((item, key) => (
+                    <Box mb={1} key={key}>
+                      <Grid container gap={2} alignItems="flex-end">
+                        <Grid item>
+                          <Avatar
+                            alt="Bilkis"
+                            src="/static/images/avatar/1.jpg"
+                            sx={{ width: 40, height: 40 }}
+                          />
+                        </Grid>
+                        <Grid item md={3}>
+                          <Box
+                            sx={{
+                              backgroundColor: "#7E98DF",
+                              borderRadius: "35px 35px 35px 10px",
+                              p: 2,
+                            }}>
+                            <Typography sx={{ color: "#fff" }}>
+                              Hi, son, how are you doing? Today, my father and I
+                              went to buy a car, bought a cool car.
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+
+                  {/* Right Chat */}
+                  <Box mb={1} sx={{ my: 5 }}>
+                    <Grid
+                      container
+                      gap={2}
+                      direction="row-reverse"
+                      alignItems="flex-end">
+                      <Grid item>
+                        <Avatar
+                          alt="Bilkis"
+                          src="/static/images/avatar/1.jpg"
+                          sx={{ width: 40, height: 40 }}
+                        />
+                      </Grid>
+                      <Grid item md={3}>
+                        <Box
+                          sx={{
+                            backgroundColor: "#fff",
+                            borderRadius: "35px 35px 10px 35px",
+                            p: 2,
+                          }}>
+                          <Typography sx={{ color: "#232323" }}>
+                            Hi, son, how are you doing? Today, my father and I
+                            went to buy a car, bought a cool car.
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Box>
+
+                {/* Bottom Chat */}
+                <Box
+                  sx={{
+                    backgroundColor: "#fff",
+                    // px: 5,
+                    // py: 5,
+                    position: "fixed",
+                    bottom: 0,
+                    width: "75%",
+                  }}>
+                  <TextField
+                    id="outlined-basic"
+                    placeholder="Type your message..."
+                    variant="outlined"
+                    fullWidth
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="start">
+                          <SendRoundedIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </React.Fragment>
+            )}
           </Grid>
         </Grid>
       </main>
