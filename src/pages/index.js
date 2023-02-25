@@ -2,6 +2,8 @@ import Head from "next/head";
 import Image from "next/image";
 import styles from "@/styles/Home.module.scss";
 import React from "react";
+import * as useDb from "@/config/database";
+
 //MUI
 
 import { styled } from "@mui/material/styles";
@@ -47,22 +49,36 @@ const WordBox = styled(Box)(({ theme }) => ({
 
 export default function Home() {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [isClicked, setIsClicked] = React.useState(false);
+  const [active, setActive] = React.useState("All");
+  const [keyword, setKeyword] = React.useState("");
+
+  console.log(keyword);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-
   const handleClose = () => {
     setAnchorEl(null);
   };
-
-  const [active, setActive] = React.useState("All");
 
   const handleClickWord = (word) => {
     setActive(word);
   };
 
-  const [isClicked, setIsClicked] = React.useState(false);
+  React.useEffect(() => {
+    useDb.getData("users", (snapshot) => {
+      const data = snapshot.val();
+      console.log(data);
+    });
+  }, []);
+
+  const sendMessage = () => {
+    useDb.sendData("messages", {
+      message: keyword,
+    });
+  };
+
   return (
     <>
       <Head>
@@ -260,13 +276,13 @@ export default function Home() {
                 ))}
                 <style>
                   {`
-      ::-webkit-scrollbar {
-        width: 0.1em;
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.2);
-      }
-    `}
+                ::-webkit-scrollbar {
+                  width: 0.1em;
+                }
+                ::-webkit-scrollbar-thumb {
+                  background-color: rgba(0, 0, 0, 0.2);
+                }
+              `}
                 </style>
               </div>
             </Container>
@@ -372,21 +388,35 @@ export default function Home() {
                 {/* Bottom Chat */}
                 <Box
                   sx={{
-                    backgroundColor: "#fff",
+                    backgroundColor: "#6e6e80",
                     // px: 5,
-                    // py: 5,
+                    // py: 10,
                     position: "fixed",
                     bottom: 0,
                     width: "75%",
+                    borderRadius: "50px",
+                    border: "none",
+                    display: "flex",
+                    alignItems: "center",
                   }}>
                   <TextField
-                    id="outlined-basic"
-                    placeholder="Type your message..."
-                    variant="outlined"
+                    placeholder="Message"
+                    variant="filled"
                     fullWidth
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        sendMessage();
+                      }
+                    }}
+                    sx={{ backgroundColor: "#fafafa" }}
                     InputProps={{
                       endAdornment: (
-                        <InputAdornment position="start">
+                        <InputAdornment
+                          position="start"
+                          onClick={sendMessage}
+                          sx={{ cursor: "pointer" }}>
                           <SendRoundedIcon />
                         </InputAdornment>
                       ),
