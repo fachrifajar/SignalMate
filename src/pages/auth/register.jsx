@@ -7,9 +7,11 @@ import {
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { auth } from "@/config/firebase";
 import * as useDb from "@/config/database";
+
 //
 import {
   Card,
@@ -22,15 +24,39 @@ import {
   IconButton,
   Divider,
   Box,
+  Alert,
+  AlertTitle,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  CardHeader,
+  CardActions,
+  Modal,
+  Backdrop,
+  Fade,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import GoogleIcon from "@mui/icons-material/Google";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import LoadingButton from "@mui/lab/LoadingButton";
-import CircularProgress from "@mui/material/CircularProgress";
 
 import { styled } from "@mui/material/styles";
+
+const MyCard = styled(Card)({
+  margin: "auto",
+  marginTop: "10%",
+  maxWidth: 500,
+  textAlign: "center",
+  borderRadius: "20px",
+  padding: "25px",
+});
+
+const MyModal = styled(Modal)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
 
 const MyButton = styled(Button)({
   borderRadius: "20px",
@@ -112,6 +138,9 @@ const Register = () => {
 
   const [usersList, setUsersList] = React.useState({});
 
+  const [showModal, setShowModal] = React.useState(false);
+  const [resendLoading, setResendLoading] = React.useState(false);
+
   React.useEffect(() => {
     useDb.getData("users", (snapshot) => {
       const data = snapshot.val();
@@ -141,6 +170,8 @@ const Register = () => {
 
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
+        setShowModal(true);
+
         const user = userCredential.user;
         console.log("user,", user);
         updateProfile(auth.currentUser, {
@@ -148,20 +179,20 @@ const Register = () => {
         }).then(() => {
           setIsLoading(false);
 
-          useDb.sendData("users", {
-            ...usersList,
-            [user.uid]: {
-              emailVerified: user.emailVerified,
-              email: user.email,
-              user_id: user.uid,
-              profile_picture: "null",
-              fullname: user.displayName,
-              providerId: "email/pass",
-              created_at: user?.auth?.currentUser?.reloadUserInfo?.createdAt,
-              password: user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
-              is_online: false,
-            },
-          });
+          // useDb.sendData("users", {
+          //   ...usersList,
+          //   [user.uid]: {
+          //     emailVerified: user.emailVerified,
+          //     email: user.email,
+          //     user_id: user.uid,
+          //     profile_picture: "null",
+          //     fullname: user.displayName,
+          //     providerId: "email/pass",
+          //     created_at: user?.auth?.currentUser?.reloadUserInfo?.createdAt,
+          //     password: user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
+          //     is_online: false,
+          //   },
+          // });
 
           console.log("auth,", auth);
           console.log("email,", email);
@@ -175,9 +206,6 @@ const Register = () => {
             .catch((error) => {
               console.error("Error sending verification email:", error);
             });
-
-          // Redirect to success page
-          router.push("/auth/login");
         });
       })
       .catch((error) => {
@@ -207,18 +235,21 @@ const Register = () => {
     signInWithPopup(auth, provider)
       .then((result) => {
         const user = result.user;
-        console.log(user)
+        console.log(user);
         useDb.sendData("users", {
           ...usersList,
           [user.uid]: {
             emailVerified: user.emailVerified,
+            email: user.email,
             created_at: new Date().getTime(),
             user_id: user.uid,
-            photo: user.photoURL,
+            profile_picture: user.photoURL,
             fullname: user.displayName,
             is_online: false,
+            friendList: "null",
           },
         });
+        router.push("/auth/login");
       })
       .catch((error) => {
         // Handle Errors here.
@@ -233,6 +264,44 @@ const Register = () => {
   };
 
   const isDisabled = !email.length || !password.length || !name.length;
+
+  const handleResend = () => {
+    setResendLoading(true);
+    sendEmailVerification(auth.currentUser)
+      .then(() => {
+        setResendLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setResendLoading(false);
+      });
+  };
+
+  const handleClose = () => {
+    setShowModal(false);
+  };
+
+  React.useEffect(() => {
+    const getData = localStorage.getItem("user");
+    const convertData = JSON.parse(getData);
+
+    console.log("convertData....", convertData);
+
+    if (convertData) {
+      router.replace("/");
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const uid = user.uid;
+        console.log("ONAUTHSTATECHANGED", user);
+      } else {
+        // User is signed out
+        // ...
+      }
+    });
+  }, []);
+
   return (
     <div>
       <Head>
@@ -302,6 +371,38 @@ const Register = () => {
                   }}>
                   Let’s create your account!
                 </Typography> */}
+
+                <MyModal open={showModal} onClose={handleClose}>
+                  <MyCard>
+                    <CardContent>
+                      <Typography variant="h4">
+                        Verification email sent!
+                      </Typography>
+
+                      <Typography variant="body1" sx={{ margin: "20px" }}>
+                        Please wait approximately <strong>1 minute.</strong> If
+                        you still have not received the email, click the button
+                        below to resend.
+                      </Typography>
+
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <MyButton
+                          variant="contained"
+                          onClick={handleResend}
+                          disabled={resendLoading}>
+                          {resendLoading ? "Resending..." : "Resend email"}
+                        </MyButton>
+                        <MyButton
+                          variant="contained"
+                          onClick={() =>
+                            (window.location.href = "/auth/login")
+                          }>
+                          Already received
+                        </MyButton>
+                      </div>
+                    </CardContent>
+                  </MyCard>
+                </MyModal>
 
                 {!isError ? (
                   <MyTextField
