@@ -127,7 +127,7 @@ const Login = () => {
                   password:
                     user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
                   is_online: true,
-                  friendList: "null",
+                  friend_list: "null",
                 },
               });
 

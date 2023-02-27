@@ -93,7 +93,6 @@ export default function Home() {
   const [keyword, setKeyword] = React.useState("");
   const [currentUserData, SetCurrentUserData] = React.useState([]);
   const [allUserData, setAllUserData] = React.useState(null);
-  // console.log(keyword);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -131,32 +130,31 @@ export default function Home() {
     });
   }, []);
 
-  console.log("STATEcurrentUserData", currentUserData);
-  console.log("STATEallUserData", allUserData);
-
   const [newFriendList, setNewFriendList] = React.useState(null);
-
   const [findFriend, setFindFriend] = React.useState(false);
-  console.log("findFriend.....", findFriend);
+  const [success, setSuccess] = React.useState(false);
+  const [reqFriends, setReqFriends] = React.useState("");
+  const [isError, setIsError] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [errMsg, setErrMsg] = React.useState("");
 
   const addFriendTrigger = () => {
     setFindFriend(true);
+    setSuccess(false);
+    setIsError(false);
   };
 
   const closeTrigger = () => {
     setFindFriend(false);
+    setSuccess(false);
+    setIsError(false);
   };
 
-  const [reqFriends, setReqFriends] = React.useState("");
-  const [isError, setIsError] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [success, setSuccess] = React.useState(false);
-  console.log(reqFriends);
+  let targetId;
 
   const addFriendList = () => {
     setIsLoading(true);
-    setSuccess(false);
-    let targetId;
+
     if (allUserData) {
       for (let i = 0; i < allUserData.length; i++) {
         if (allUserData[i].email == reqFriends) {
@@ -171,9 +169,33 @@ export default function Home() {
       }
       if (newFriendList == null) {
         setIsError(true);
+        setErrMsg("User not found!");
         setIsLoading(false);
         setSuccess(false);
       }
+
+      if (reqFriends == currentUserData.email) {
+        setIsError(true);
+        setErrMsg("Cannot add yourself as a friend");
+        setIsLoading(false);
+        setSuccess(false);
+      }
+
+      // console.log("currentUserData:===", currentUserData['friend_list']);
+      let alreadyFriend = 0;
+      for (let i = 0; i < currentUserData['friend_list'].length; i++) {
+        if (currentUserData['friend_list'][i] == targetId) {
+          alreadyFriend++;
+        }
+      }
+
+      if (alreadyFriend > 0) {
+        setIsError(true);
+        setSuccess(false);
+        setErrMsg("User already your friend");
+        return;
+      }
+
       if (newFriendList && newFriendList.length > 0) {
         updateFriendList(targetId);
       }
@@ -181,44 +203,127 @@ export default function Home() {
   };
 
   // const updateFriendList = (targetId) => {
-  //   updateData(`/users/${currentUserData.user_id}/friendList`, newFriendList)
-  //     .then(() => {
-  //       console.log("Friend list updated successfully");
-  //       setNewFriendList([]);
-  //       setIsLoading(false);
-  //       setSuccess(true);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error updating friend list:", error);
-  //       setIsError(true);
-  //       setIsLoading(false);
-  //       setSuccess(false);
-  //     });
+  //   // Get the current user's friend_list array from the database
+  //   useDb.getData(
+  //     `/users/${currentUserData.user_id}/friend_list`,
+  //     (snapshot) => {
+  //       let currentFriendList = snapshot.val() || [];
+
+  //       if (reqFriends === currentUserData.email) {
+  //         console.log("Cannot add yourself as a friend.");
+  //         setIsError(true);
+  //         setIsLoading(false);
+  //         return;
+  //       }
+
+  //       // If the currentFriendList is null, initialize it to an empty array
+  //       if (!Array.isArray(currentFriendList)) {
+  //         currentFriendList = [];
+  //       }
+
+  //       // If the targetId is not already in the friend_list, add it
+  //       if (!currentFriendList.includes(targetId)) {
+  //         currentFriendList.push(targetId);
+  //       }
+
+  //       // Update the friend_list array in the database
+  //       updateData(
+  //         `/users/${currentUserData.user_id}/friend_list`,
+  //         currentFriendList
+  //       )
+  //         .then(() => {
+  //           console.log("Friend list updated successfully");
+  //           setNewFriendList([]);
+  //           setIsLoading(false);
+  //           setSuccess(true);
+  //           setFindFriend(false);
+  //         })
+  //         .catch((error) => {
+  //           console.error("Error updating friend list:", error);
+  //           setIsError(true);
+  //           setIsLoading(false);
+  //           setSuccess(false);
+  //         });
+  //     }
+  //   );
   // };
 
-  const updateFriendList = (targetId) => {
-    // Get the current user's friendList array from the database
+  const updateFriendList = (targetEmail, targetId) => {
+    // Get the current user's friend_list array from the database
     useDb.getData(
       `/users/${currentUserData.user_id}/friend_list`,
       (snapshot) => {
-        const currentFriendList = snapshot.val() || [];
+        let currentFriendList = snapshot.val();
+        // If the currentFriendList is null or "null", initialize it to an empty array
+        if (!Array.isArray(currentFriendList)) {
+          currentFriendList = [];
+        }
 
-        // If the targetId is not already in the friendList, add it
+        if (reqFriends === currentUserData.email) {
+          setIsError(true);
+          setErrMsg("Cannot add yourself as a friend");
+          setIsLoading(false);
+          return;
+        }
+
+        // If the targetId is not already in the friend_list, add it
         if (!currentFriendList.includes(targetId)) {
           currentFriendList.push(targetId);
         }
 
-        // Update the friendList array in the database
+        // Update the friend_list array in the database
         updateData(
           `/users/${currentUserData.user_id}/friend_list`,
-          currentFriendList
+          currentFriendList.filter(
+            (item) => item !== undefined && item !== "null"
+          )
         )
           .then(() => {
             console.log("Friend list updated successfully");
-            setNewFriendList([]);
-            setIsLoading(false);
-            setSuccess(true);
-            setFindFriend(false);
+
+            // Update the friend_list array in the target user's data
+            useDb.getData(`/users`, (snapshot) => {
+              const usersData = snapshot.val();
+
+              Object.entries(usersData).forEach(([userId, userData]) => {
+                if (userData.email === reqFriends) {
+                  let targetFriendList = userData.friend_list;
+                  // If the targetFriendList is null or "null", initialize it to an empty array
+                  if (!Array.isArray(targetFriendList)) {
+                    targetFriendList = [];
+                  }
+
+                  // If the current user's id is not already in the target user's friend_list, add it
+                  if (!targetFriendList.includes(currentUserData.user_id)) {
+                    targetFriendList.push(currentUserData.user_id);
+                  }
+
+                  // Update the friend_list array in the database for the target user
+                  updateData(
+                    `/users/${userId}/friend_list`,
+                    targetFriendList.filter(
+                      (item) => item !== undefined && item !== "null"
+                    )
+                  )
+                    .then(() => {
+                      console.log("Target friend list updated successfully");
+                      setNewFriendList([]);
+                      setIsLoading(false);
+                      setSuccess(true);
+                      setFindFriend(false);
+                    })
+                    .catch((error) => {
+                      console.error(
+                        "Error updating target friend list:",
+                        error
+                      );
+                      setIsError(true);
+                      setIsLoading(false);
+                      setSuccess(false);
+                    });
+                }
+              });
+            });
           })
           .catch((error) => {
             console.error("Error updating friend list:", error);
@@ -229,19 +334,6 @@ export default function Home() {
       }
     );
   };
-
-  // React.useEffect(() => {
-  //   let targetId;
-  //   if (allUserData) {
-  //     for (let i = 0; i < allUserData.length; i++) {
-  //       if (allUserData[i].email == "hennyseptiani4@gmail.com") {
-  //         setNewFriendList(allUserData[i].email);
-  //         targetId = allUserData[i].user_id;
-  //         console.log("targetId...", targetId);
-  //       }
-  //     }
-  //   }
-  // }, [allUserData]);
 
   const sendMessage = () => {
     useDb.sendData("messages", {
@@ -263,8 +355,6 @@ export default function Home() {
   React.useEffect(() => {
     const getData = localStorage.getItem("user");
     const convertData = JSON.parse(getData);
-
-    // console.log("convertData....", convertData);
 
     if (!convertData) {
       router.replace("/auth/login");
@@ -355,7 +445,7 @@ export default function Home() {
                       fullWidth
                       id="standard-error-helper-text"
                       label="By Email*"
-                      helperText="User not found!"
+                      helperText={errMsg}
                       // variant="standard"
                       onChange={(event) => setReqFriends(event.target.value)}
                     />

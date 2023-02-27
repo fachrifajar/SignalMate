@@ -246,7 +246,7 @@ const Register = () => {
             profile_picture: user.photoURL,
             fullname: user.displayName,
             is_online: false,
-            friendList: "null",
+            friend_list: "null",
           },
         });
         router.push("/auth/login");
