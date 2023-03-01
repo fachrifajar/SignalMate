@@ -76,25 +76,13 @@ export default function Home(props) {
     minute: "numeric",
   });
 
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const [isClicked, setIsClicked] = React.useState(false);
-  const [active, setActive] = React.useState("All");
-  const [keyword, setKeyword] = React.useState("");
   const [currentUserData, SetCurrentUserData] = React.useState([]);
-  const [allUserData, setAllUserData] = React.useState(null);
 
   const [success, setSuccess] = React.useState(false);
 
   const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState("");
-  const [validFriendList, setValidFriendList] = React.useState([]);
-
-  const [currentId, setCurrentId] = React.useState("");
-
-  const [messageList, setMessageList] = React.useState([]);
-  const [messageKey, setMessageKey] = React.useState([]);
-  const [allMessage, setAllMessage] = React.useState([]);
 
   const [name, setName] = React.useState("");
   const [profilePict, setProfilePicture] = React.useState("");
@@ -114,30 +102,6 @@ export default function Home(props) {
           });
           setAllUserData(usersArray);
           SetCurrentUserData(data[uid]);
-          let targetData = data[uid];
-
-          for (let i = 0; i < usersArray.length; i++) {
-            for (let j = 0; j < targetData.friend_list.length; j++) {
-              if (usersArray[i].user_id == targetData.friend_list[j]) {
-                temp.push(usersArray[i]);
-                setValidFriendList(temp);
-              }
-            }
-          }
-        });
-
-        useDb.getData(`messages/user_test`, (snapshot) => {
-          const data = snapshot.val();
-
-          if (data) {
-            setMessageList(data);
-            setMessageKey(Object.keys(data));
-
-            const messagesArray = Object.keys(data).map((timestamp) => {
-              return { ...data[timestamp] };
-            });
-            setAllMessage(messagesArray);
-          }
         });
       } else {
         // User is signed out
@@ -192,10 +156,13 @@ export default function Home(props) {
         });
     }
     if (profilePict) {
-      updateData(`/users/${currentUserData.user_id}/profile_picture`, profilePict)
+      updateData(
+        `/users/${currentUserData.user_id}/profile_picture`,
+        profilePict
+      )
         .then(() => {
           window.location.reload();
-          setSuccess(true)
+          setSuccess(true);
         })
         .catch((error) => {
           console.log(error);
