@@ -1,0 +1,9 @@
+{
+    "functions": {
+      "api/**/*": {
+        "memory": 512,
+        "timeout": 30
+      }
+    }
+  }
+  
