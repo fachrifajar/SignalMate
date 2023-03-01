@@ -15,6 +15,10 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/router";
 import { updateData } from "@/config/database";
+import { useSelector, useDispatch } from "react-redux";
+import { getCookies, getCookie, setCookie, deleteCookie } from "cookies-next";
+import { deleteAuthData } from "@/store/reducer/auth";
+import * as authRedux from "@/store/reducer/auth";
 //MUI
 
 import { styled } from "@mui/material/styles";
@@ -50,6 +54,7 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { current } from "@reduxjs/toolkit";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import { CompareSharp } from "@mui/icons-material";
 
 const MyButton = styled(Button)({
   width: "100px",
@@ -86,9 +91,14 @@ const WordBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-export default function Home() {
+export default function Home(props) {
   const router = useRouter();
 
+  //REDUX
+  const dispatch = useDispatch();
+
+  // let x= (props.profile);
+  // console.log(JSON.parse(x))
   const jakartaTime = new Date().toLocaleString("en-US", {
     timeZone: "Asia/Jakarta",
     hour12: true,
@@ -226,8 +236,11 @@ export default function Home() {
   }, [selectedChat, allMessage]);
 
   // console.log(selectedTimestampId);
+  console.log("validFriendList---",validFriendList)
+  console.log("allMessage--",allMessage)
 
   const result = {};
+  const result2 = {}
   let getLastTime;
   if (validFriendList && allMessage) {
     validFriendList.forEach((friend) => {
@@ -242,15 +255,34 @@ export default function Home() {
           }
           result[key].push(message.timestamp);
         }
+        if (
+          friend.user_id === message.senderId ||
+          friend.user_id === message.receiver_id.user_id
+        ) {
+          const key = message.senderId;
+          if (!result2[key]) {
+            result2[key] = [];
+          }
+          result2[key].push(message.timestamp);
+        }
       });
     });
+    // console.log("result--",result)
+    // console.log("result2--",result2)
 
-    getLastTime = Object.keys(result).map((key) => ({
+    const combinedObject = Object.assign({}, result, result2);
+  
+    for (let key in combinedObject) {
+      combinedObject[key] = Array.from(new Set(combinedObject[key])).sort();
+    }
+
+    // console.log("combinedObject--",combinedObject)
+    getLastTime = Object.keys(combinedObject).map((key) => ({
       id: key,
-      value: result[key].slice(-1)[0],
+      value: combinedObject[key].slice(-1)[0],
     }));
 
-    console.log("getLastTime---", getLastTime);
+    // console.log("getLastTime---", getLastTime);
   }
 
   // console.log("result---", result);
@@ -299,6 +331,10 @@ export default function Home() {
     setSuccess(false);
     setIsError(false);
   };
+
+  const profileTrigger = () => {
+    router.push("/profile");
+  }
 
   const closeTrigger = () => {
     setFindFriend(false);
@@ -409,6 +445,8 @@ export default function Home() {
     signOut(auth)
       .then(() => {
         localStorage.removeItem("user");
+        deleteCookie("profile");
+        dispatch(deleteAuthData());
 
         updateData(`/users/${currentUserData.user_id}/is_online`, false)
           .then(() => {
@@ -424,10 +462,9 @@ export default function Home() {
   };
 
   React.useEffect(() => {
-    const getData = localStorage.getItem("user");
-    const convertData = JSON.parse(getData);
+    const validateAcc = props.profile;
 
-    if (!convertData) {
+    if (!validateAcc) {
       router.replace("/auth/login");
     }
   }, []);
@@ -610,7 +647,7 @@ export default function Home() {
                       <PersonAddIcon sx={{ marginRight: "8px" }} />
                       Add Friends
                     </MenuItem>
-                    <MenuItem onClick={handleClose}>
+                    <MenuItem onClick={handleClose && profileTrigger}>
                       <ManageAccountsIcon sx={{ marginRight: "8px" }} />
                       Profile
                     </MenuItem>
@@ -754,13 +791,13 @@ export default function Home() {
                               {item.fullname}
                             </Typography>
                             {item.is_online ? (
-                          <Typography
-                            sx={{ color: "#7E98DF" }}
-                            component="span"
-                            variant="body2">
-                            Online
-                          </Typography>
-                        ) : null}
+                              <Typography
+                                sx={{ color: "#7E98DF" }}
+                                component="span"
+                                variant="body2">
+                                Online
+                              </Typography>
+                            ) : null}
                           </Box>
                         </Box>
                         {notifCount !== 0 ? (
@@ -1026,3 +1063,13 @@ export default function Home() {
     </>
   );
 }
+
+export const getServerSideProps = async (context) => {
+  const profile = getCookie("profile", context) || "";
+
+  return {
+    props: {
+      profile,
+    },
+  };
+};

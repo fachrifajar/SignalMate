@@ -12,6 +12,9 @@ import { auth } from "@/config/firebase";
 import * as useDb from "@/config/database";
 import Alert from "@mui/material/Alert";
 import { updateData } from "@/config/database";
+import { useSelector, useDispatch } from "react-redux";
+import { getCookies, getCookie, setCookie, deleteCookie } from "cookies-next";
+import * as authRedux from "@/store/reducer/auth";
 //
 import {
   Card,
@@ -63,7 +66,10 @@ const MyTextField = styled(TextField)({
   },
 });
 
-const Login = () => {
+const Login = (props) => {
+  //REDUX
+  const dispatch = useDispatch();
+
   const router = useRouter();
 
   const [showPassword, setShowPassword] = React.useState(false);
@@ -146,6 +152,11 @@ const Login = () => {
               console.log(user.emailVerified);
 
               localStorage.setItem("user", JSON.stringify(user));
+
+              setCookie("profile", JSON.stringify(user), {
+                maxAge: 60 * 6 * 24,
+              });
+              dispatch(authRedux.setAuthProfile(user));
               isSuccess(true);
               router.replace("/");
             }
@@ -200,6 +211,11 @@ const Login = () => {
         });
 
         localStorage.setItem("user", JSON.stringify(user));
+        setCookie("profile", JSON.stringify(user), {
+          maxAge: 60 * 6 * 24,
+        });
+        dispatch(authRedux.setAuthProfile(user));
+        isSuccess(true);
         router.replace("/");
       })
       .catch((error) => {
@@ -207,7 +223,7 @@ const Login = () => {
         const errorCode = error.code;
         const errorMessage = error.message;
         // The email of the user's account used.
-        const email = error.customData.email;
+        // const email = error.customData.email;
         // The AuthCredential type that was used.
         const credential = GoogleAuthProvider.credentialFromError(error);
         // ...
@@ -230,12 +246,9 @@ const Login = () => {
   };
 
   React.useEffect(() => {
-    const getData = localStorage.getItem("user");
-    const convertData = JSON.parse(getData);
+    const validateAcc = props.profile;
 
-    console.log("convertData....", convertData);
-
-    if (convertData) {
+    if (validateAcc) {
       router.replace("/");
     }
 
@@ -495,6 +508,16 @@ const Login = () => {
       </main>
     </div>
   );
+};
+
+export const getServerSideProps = async (context) => {
+  const profile = getCookie("profile", context) || "";
+
+  return {
+    props: {
+      profile,
+    },
+  };
 };
 
 export default Login;
