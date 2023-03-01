@@ -48,6 +48,8 @@ import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LoadingButton from "@mui/lab/LoadingButton";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { current } from "@reduxjs/toolkit";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 
 const MyButton = styled(Button)({
   width: "100px",
@@ -87,12 +89,35 @@ const WordBox = styled(Box)(({ theme }) => ({
 export default function Home() {
   const router = useRouter();
 
+  const jakartaTime = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Jakarta",
+    hour12: true,
+    hour: "numeric",
+    minute: "numeric",
+  });
+
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isClicked, setIsClicked] = React.useState(false);
   const [active, setActive] = React.useState("All");
   const [keyword, setKeyword] = React.useState("");
   const [currentUserData, SetCurrentUserData] = React.useState([]);
   const [allUserData, setAllUserData] = React.useState(null);
+  const [newFriendList, setNewFriendList] = React.useState(null);
+  const [findFriend, setFindFriend] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+  const [reqFriends, setReqFriends] = React.useState("");
+  const [isError, setIsError] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [errMsg, setErrMsg] = React.useState("");
+  const [validFriendList, setValidFriendList] = React.useState([]);
+
+  const [currentId, setCurrentId] = React.useState("");
+  const [selectedChat, setSelectedChat] = React.useState(null);
+  const [messageList, setMessageList] = React.useState([]);
+  const [messageKey, setMessageKey] = React.useState([]);
+  const [allMessage, setAllMessage] = React.useState([]);
+  const [countNotif, setCountNotif] = React.useState([]);
+  const [selectedTimestampId, setSelectedTimestampId] = React.useState(null);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -105,23 +130,46 @@ export default function Home() {
     setActive(word);
   };
 
+  let temp = [];
+  let temps = [];
   React.useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         const uid = user.uid;
+        setCurrentId(uid);
 
         useDb.getData(`users`, (snapshot) => {
           const data = snapshot.val();
-          console.log(data);
+
           const usersArray = Object.keys(data).map((userId) => {
             return { ...data[userId] };
           });
           setAllUserData(usersArray);
-          // console.log("CONVERT", usersArray);
           SetCurrentUserData(data[uid]);
-          // console.log("DATASNAPSHOT", data[uid]);
-          // console.log(data["YNgqY5tBR6PQdavrQRdI1uCfymG3"]);
-          // console.log(data[currentId]);
+          let targetData = data[uid];
+
+          for (let i = 0; i < usersArray.length; i++) {
+            for (let j = 0; j < targetData.friend_list.length; j++) {
+              if (usersArray[i].user_id == targetData.friend_list[j]) {
+                temp.push(usersArray[i]);
+                setValidFriendList(temp);
+              }
+            }
+          }
+        });
+
+        useDb.getData(`messages/user_test`, (snapshot) => {
+          const data = snapshot.val();
+
+          if (data) {
+            setMessageList(data);
+            setMessageKey(Object.keys(data));
+
+            const messagesArray = Object.keys(data).map((timestamp) => {
+              return { ...data[timestamp] };
+            });
+            setAllMessage(messagesArray);
+          }
         });
       } else {
         // User is signed out
@@ -130,13 +178,121 @@ export default function Home() {
     });
   }, []);
 
-  const [newFriendList, setNewFriendList] = React.useState(null);
-  const [findFriend, setFindFriend] = React.useState(false);
-  const [success, setSuccess] = React.useState(false);
-  const [reqFriends, setReqFriends] = React.useState("");
-  const [isError, setIsError] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [errMsg, setErrMsg] = React.useState("");
+  console.log("allMessage---", allMessage);
+  console.log("validFriendLIst---", validFriendList);
+
+  var countsNotif = [];
+
+  for (let i = 0; i < allMessage.length; i++) {
+    if (
+      allMessage[i].is_read == false &&
+      allMessage[i].receiver_id.user_id == currentId
+    ) {
+      countsNotif.push(allMessage[i]);
+    }
+  }
+  // console.log("countNotif",countNotif)
+  const notifications = {};
+
+  for (let i = 0; i < countsNotif.length; i++) {
+    const item = countsNotif[i];
+
+    if (item.is_read === false) {
+      const key = item.senderId;
+
+      if (!notifications[key]) {
+        notifications[key] = { notifCount: 1 };
+      } else {
+        notifications[key].notifCount++;
+      }
+    }
+  }
+  const notificationsArray = Object.entries(notifications).map(
+    ([key, value]) => ({ id: key, message: value })
+  );
+
+  React.useEffect(() => {
+    if (selectedChat) {
+      var selectedTimestampIds = [];
+      for (let i = 0; i < allMessage.length; i++) {
+        if (allMessage[i].senderId == selectedChat.user_id) {
+          selectedTimestampIds.push(allMessage[i].timestampId);
+        }
+      }
+
+      // console.log("selectedTimestampIds---", selectedTimestampIds);
+      setSelectedTimestampId(selectedTimestampIds);
+    }
+  }, [selectedChat, allMessage]);
+
+  // console.log(selectedTimestampId);
+
+  const result = {};
+  let getLastTime;
+  if (validFriendList && allMessage) {
+    validFriendList.forEach((friend) => {
+      allMessage.forEach((message) => {
+        if (
+          friend.user_id === message.senderId ||
+          friend.user_id === message.receiver_id.user_id
+        ) {
+          const key = message.receiver_id.user_id;
+          if (!result[key]) {
+            result[key] = [];
+          }
+          result[key].push(message.timestamp);
+        }
+      });
+    });
+
+    getLastTime = Object.keys(result).map((key) => ({
+      id: key,
+      value: result[key].slice(-1)[0],
+    }));
+
+    console.log("getLastTime---", getLastTime);
+  }
+
+  // console.log("result---", result);
+
+  const sendMessage = () => {
+    useDb.sendData("messages", {
+      [`user_test`]: {
+        ...messageList,
+        [new Date().getTime()]: {
+          text: keyword,
+          image: "",
+          timestamp: jakartaTime,
+          receiverPicture: "",
+          receiver_id: selectedChat,
+          sender: currentUserData.fullname,
+          senderPicture: currentUserData.profile_picture,
+          senderId: currentUserData.user_id,
+          is_read: false,
+          timestampId: new Date().getTime(),
+        },
+      },
+    });
+    setKeyword("");
+  };
+
+  // console.log("selectedChat---", selectedChat);
+  // [1677685187818, 1677685684543, 1677685685332, 1677685686587, 1677685687943, 1677685689581]
+  const updateNotif = () => {
+    console.log("execute0");
+    if (selectedTimestampId) {
+      console.log("execute");
+      selectedTimestampId.forEach((id) => {
+        updateData(`/messages/user_test/${id}/is_read`, true)
+          .then(() => {
+            console.log(`success update notif for ID ${id}`);
+          })
+          .catch((error) => {
+            console.log(`error updating notif for ID ${id}: ${error}`);
+          });
+      });
+    }
+  };
 
   const addFriendTrigger = () => {
     setFindFriend(true);
@@ -162,9 +318,8 @@ export default function Home() {
           setIsLoading(false);
           setSuccess(true);
           setNewFriendList(allUserData[i].email);
-          console.log("newFriendList...", newFriendList);
+
           targetId = allUserData[i].user_id;
-          console.log("targetId...", targetId);
         }
       }
       if (newFriendList == null) {
@@ -181,11 +336,15 @@ export default function Home() {
         setSuccess(false);
       }
 
-      // console.log("currentUserData:===", currentUserData['friend_list']);
       let alreadyFriend = 0;
-      for (let i = 0; i < currentUserData['friend_list'].length; i++) {
-        if (currentUserData['friend_list'][i] == targetId) {
-          alreadyFriend++;
+      if (
+        currentUserData["friend_list"] !== "null" ||
+        currentUserData["friend_list"]
+      ) {
+        for (let i = 0; i < currentUserData["friend_list"].length; i++) {
+          if (currentUserData["friend_list"][i] == targetId) {
+            alreadyFriend++;
+          }
         }
       }
 
@@ -202,128 +361,39 @@ export default function Home() {
     }
   };
 
-  // const updateFriendList = (targetId) => {
-  //   // Get the current user's friend_list array from the database
-  //   useDb.getData(
-  //     `/users/${currentUserData.user_id}/friend_list`,
-  //     (snapshot) => {
-  //       let currentFriendList = snapshot.val() || [];
-
-  //       if (reqFriends === currentUserData.email) {
-  //         console.log("Cannot add yourself as a friend.");
-  //         setIsError(true);
-  //         setIsLoading(false);
-  //         return;
-  //       }
-
-  //       // If the currentFriendList is null, initialize it to an empty array
-  //       if (!Array.isArray(currentFriendList)) {
-  //         currentFriendList = [];
-  //       }
-
-  //       // If the targetId is not already in the friend_list, add it
-  //       if (!currentFriendList.includes(targetId)) {
-  //         currentFriendList.push(targetId);
-  //       }
-
-  //       // Update the friend_list array in the database
-  //       updateData(
-  //         `/users/${currentUserData.user_id}/friend_list`,
-  //         currentFriendList
-  //       )
-  //         .then(() => {
-  //           console.log("Friend list updated successfully");
-  //           setNewFriendList([]);
-  //           setIsLoading(false);
-  //           setSuccess(true);
-  //           setFindFriend(false);
-  //         })
-  //         .catch((error) => {
-  //           console.error("Error updating friend list:", error);
-  //           setIsError(true);
-  //           setIsLoading(false);
-  //           setSuccess(false);
-  //         });
-  //     }
-  //   );
-  // };
-
-  const updateFriendList = (targetEmail, targetId) => {
-    // Get the current user's friend_list array from the database
+  const updateFriendList = (targetId) => {
     useDb.getData(
       `/users/${currentUserData.user_id}/friend_list`,
       (snapshot) => {
-        let currentFriendList = snapshot.val();
-        // If the currentFriendList is null or "null", initialize it to an empty array
-        if (!Array.isArray(currentFriendList)) {
-          currentFriendList = [];
-        }
+        let currentFriendList = snapshot.val() || [];
 
         if (reqFriends === currentUserData.email) {
           setIsError(true);
-          setErrMsg("Cannot add yourself as a friend");
           setIsLoading(false);
           return;
         }
 
-        // If the targetId is not already in the friend_list, add it
+        if (!Array.isArray(currentFriendList)) {
+          currentFriendList = [];
+        }
+
         if (!currentFriendList.includes(targetId)) {
           currentFriendList.push(targetId);
         }
 
-        // Update the friend_list array in the database
         updateData(
           `/users/${currentUserData.user_id}/friend_list`,
-          currentFriendList.filter(
-            (item) => item !== undefined && item !== "null"
-          )
+          currentFriendList
         )
           .then(() => {
-            console.log("Friend list updated successfully");
+            setNewFriendList([]);
+            setIsLoading(false);
+            setSuccess(true);
+            setFindFriend(false);
 
-            // Update the friend_list array in the target user's data
-            useDb.getData(`/users`, (snapshot) => {
-              const usersData = snapshot.val();
-
-              Object.entries(usersData).forEach(([userId, userData]) => {
-                if (userData.email === reqFriends) {
-                  let targetFriendList = userData.friend_list;
-                  // If the targetFriendList is null or "null", initialize it to an empty array
-                  if (!Array.isArray(targetFriendList)) {
-                    targetFriendList = [];
-                  }
-
-                  // If the current user's id is not already in the target user's friend_list, add it
-                  if (!targetFriendList.includes(currentUserData.user_id)) {
-                    targetFriendList.push(currentUserData.user_id);
-                  }
-
-                  // Update the friend_list array in the database for the target user
-                  updateData(
-                    `/users/${userId}/friend_list`,
-                    targetFriendList.filter(
-                      (item) => item !== undefined && item !== "null"
-                    )
-                  )
-                    .then(() => {
-                      console.log("Target friend list updated successfully");
-                      setNewFriendList([]);
-                      setIsLoading(false);
-                      setSuccess(true);
-                      setFindFriend(false);
-                    })
-                    .catch((error) => {
-                      console.error(
-                        "Error updating target friend list:",
-                        error
-                      );
-                      setIsError(true);
-                      setIsLoading(false);
-                      setSuccess(false);
-                    });
-                }
-              });
-            });
+            updateData(`/users/${targetId}/friend_list`, [
+              currentUserData.user_id,
+            ]);
           })
           .catch((error) => {
             console.error("Error updating friend list:", error);
@@ -335,17 +405,18 @@ export default function Home() {
     );
   };
 
-  const sendMessage = () => {
-    useDb.sendData("messages", {
-      message: keyword,
-    });
-  };
-
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
         localStorage.removeItem("user");
-        window.location.reload();
+
+        updateData(`/users/${currentUserData.user_id}/is_online`, false)
+          .then(() => {
+            window.location.reload();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
       })
       .catch((error) => {
         console.log(error);
@@ -540,6 +611,10 @@ export default function Home() {
                       Add Friends
                     </MenuItem>
                     <MenuItem onClick={handleClose}>
+                      <ManageAccountsIcon sx={{ marginRight: "8px" }} />
+                      Profile
+                    </MenuItem>
+                    {/* <MenuItem onClick={handleClose}>
                       <PhoneIcon sx={{ marginRight: "8px" }} />
                       Calls
                     </MenuItem>
@@ -550,7 +625,7 @@ export default function Home() {
                     <MenuItem onClick={handleClose}>
                       <SettingsIcon sx={{ marginRight: "8px" }} />
                       Settings
-                    </MenuItem>
+                    </MenuItem> */}
                     <MenuItem onClick={handleClose && handleLogout}>
                       <LogoutIcon
                         sx={{ marginRight: "8px" }}
@@ -629,52 +704,112 @@ export default function Home() {
                     overflow: "hidden",
                     overflowY: "scroll",
                   }}>
-                  {[...new Array(15)].map((item, key) => (
-                    <Box
-                      key={key}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="space-between"
-                      padding={2}
-                      marginTop="20px"
-                      onClick={() => setIsClicked(true)}>
-                      <Box display="flex" alignItems="center">
-                        <Avatar
-                          sx={{ width: 56, height: 56, marginRight: 2 }}
-                          alt="User Avatar">
-                          J
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1">John Doe</Typography>
-                          <Typography variant="body2">
-                            Lorem ipsum dolor sit amet
-                          </Typography>
-                        </Box>
-                      </Box>
+                  {validFriendList.map((item, key) => {
+                    const notification = notificationsArray.find(
+                      (n) => n.id === item.user_id
+                    );
+                    const notifCount = notification
+                      ? notification.message.notifCount
+                      : 0;
+
+                    const getTime = getLastTime.find(
+                      (n) => n.id === item.user_id
+                    );
+
+                    return (
                       <Box
+                        key={key}
                         display="flex"
-                        flexDirection="column"
-                        alignItems="flex-end">
-                        <Typography variant="subtitle2">8:30 AM</Typography>
-                        <Box
-                          sx={{
-                            backgroundColor: "#7E98DF",
-                            width: 28,
-                            height: 28,
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#fff",
-                            fontSize: "0.9rem",
-                            fontWeight: "bold",
-                            marginTop: 1,
-                          }}>
-                          5
+                        alignItems="center"
+                        justifyContent="space-between"
+                        padding={2}
+                        marginTop="20px"
+                        onClick={() => {
+                          setIsClicked(true);
+                          setSelectedChat(item);
+                          updateNotif();
+                        }}>
+                        <Box display="flex" alignItems="center">
+                          {item.profile_picture !== "null" ? (
+                            <img
+                              alt="user photo"
+                              src={item.profile_picture}
+                              style={{
+                                width: 56,
+                                height: 56,
+                                marginRight: "15px",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          ) : (
+                            <Avatar
+                              sx={{ width: 56, height: 56, marginRight: 2 }}
+                              alt="User Avatar">
+                              {item.fullname[0].toUpperCase()}
+                            </Avatar>
+                          )}
+
+                          <Box>
+                            <Typography variant="subtitle1">
+                              {item.fullname}
+                            </Typography>
+                            {item.is_online ? (
+                          <Typography
+                            sx={{ color: "#7E98DF" }}
+                            component="span"
+                            variant="body2">
+                            Online
+                          </Typography>
+                        ) : null}
+                          </Box>
                         </Box>
+                        {notifCount !== 0 ? (
+                          <Box
+                            display="flex"
+                            flexDirection="column"
+                            alignItems="flex-end"
+                            justifyContent="center">
+                            {getTime ? (
+                              <>
+                                <Typography variant="subtitle2">
+                                  {getTime.value}
+                                </Typography>
+                                <Box
+                                  sx={{
+                                    backgroundColor: "#7E98DF",
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: "50%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    color: "#fff",
+                                    fontSize: "0.9rem",
+                                    fontWeight: "bold",
+                                    marginTop: 1,
+                                  }}>
+                                  {notifCount}
+                                </Box>
+                              </>
+                            ) : (
+                              <CircularProgress size={16} thickness={6} />
+                            )}
+                          </Box>
+                        ) : getTime ? (
+                          <Box
+                            display="flex"
+                            flexDirection="column"
+                            alignItems="flex-end"
+                            justifyContent="center">
+                            <Typography variant="subtitle2">
+                              {getTime.value}
+                            </Typography>
+                          </Box>
+                        ) : null}
                       </Box>
-                    </Box>
-                  ))}
+                    );
+                  })}
+
                   <style>
                     {`
                 ::-webkit-scrollbar {
@@ -689,7 +824,7 @@ export default function Home() {
               </Container>
             </Grid>
 
-            <Grid item md={9} sx={{ backgroundColor: "#FAFAFA" }}>
+            <Grid item md={9} sx={{ backgroundColor: "#DADADA" }}>
               {!isClicked && (
                 <Typography
                   sx={{
@@ -709,21 +844,36 @@ export default function Home() {
                   {/* Appbar */}
                   <Box sx={{ backgroundColor: "#fff", px: 5, py: 2 }}>
                     <Box display="flex" alignItems="center" gap={2}>
-                      <Avatar
-                        alt="Bilkis"
-                        src="/static/images/avatar/1.jpg"
-                        sx={{ width: 48, height: 48 }}
-                      />
+                      {selectedChat.profile_picture !== "null" ? (
+                        <Avatar
+                          alt="user photo"
+                          src={selectedChat.profile_picture}
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: "50%",
+                          }}
+                        />
+                      ) : (
+                        <Avatar
+                          alt={selectedChat.fullname.toUpperCase()}
+                          src="/static/images/avatar/1.jpg"
+                          sx={{ width: 48, height: 48 }}
+                        />
+                      )}
+
                       <div>
                         <Typography variant="subtitle1">
-                          Theresa Webb
+                          {selectedChat.fullname}
                         </Typography>
-                        <Typography
-                          sx={{ color: "#7E98DF" }}
-                          component="span"
-                          variant="body2">
-                          Online
-                        </Typography>
+                        {selectedChat.is_online ? (
+                          <Typography
+                            sx={{ color: "#7E98DF" }}
+                            component="span"
+                            variant="body2">
+                            Online
+                          </Typography>
+                        ) : null}
                       </div>
                     </Box>
                   </Box>
@@ -731,62 +881,102 @@ export default function Home() {
                   {/* Box Chat */}
                   <Box px={5} py={3} sx={{ height: "80vh", overflowY: "auto" }}>
                     {/* Left Chat */}
-                    {[...new Array(5)].map((item, key) => (
-                      <Box mb={1} key={key}>
-                        <Grid container gap={2} alignItems="flex-end">
-                          <Grid item>
-                            <Avatar
-                              alt="Bilkis"
-                              src="/static/images/avatar/1.jpg"
-                              sx={{ width: 40, height: 40 }}
-                            />
-                          </Grid>
-                          <Grid item md={3}>
-                            <Box
-                              sx={{
-                                backgroundColor: "#7E98DF",
-                                borderRadius: "35px 35px 35px 10px",
-                                p: 2,
-                              }}>
-                              <Typography sx={{ color: "#fff" }}>
-                                Hi, son, how are you doing? Today, my father and
-                                I went to buy a car, bought a cool car.
-                              </Typography>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    ))}
-
-                    {/* Right Chat */}
-                    <Box mb={1} sx={{ my: 5 }}>
-                      <Grid
-                        container
-                        gap={2}
-                        direction="row-reverse"
-                        alignItems="flex-end">
-                        <Grid item>
-                          <Avatar
-                            alt="Bilkis"
-                            src="/static/images/avatar/1.jpg"
-                            sx={{ width: 40, height: 40 }}
-                          />
-                        </Grid>
-                        <Grid item md={3}>
-                          <Box
-                            sx={{
-                              backgroundColor: "#fff",
-                              borderRadius: "35px 35px 10px 35px",
-                              p: 2,
-                            }}>
-                            <Typography sx={{ color: "#232323" }}>
-                              Hi, son, how are you doing? Today, my father and I
-                              went to buy a car, bought a cool car.
-                            </Typography>
+                    {messageKey.map((item, key) => {
+                      if (
+                        messageList[item].senderId == currentUserData.user_id &&
+                        messageList[item].receiver_id.user_id ==
+                          selectedChat.user_id
+                      ) {
+                        return (
+                          <Box mb={1} key={key}>
+                            <Grid
+                              container
+                              gap={2}
+                              direction="row-reverse"
+                              alignItems="flex-end">
+                              <Grid item md={2}>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "flex-end", // set justify content to flex-end
+                                    flexDirection: "row",
+                                  }}>
+                                  <Box
+                                    sx={{
+                                      backgroundColor: "#7E98DF",
+                                      borderRadius: "35px 35px 10px 35px",
+                                      p: 2,
+                                      maxWidth: "80vw",
+                                      overflow: "hidden",
+                                      wordWrap: "break-word",
+                                    }}>
+                                    <Typography sx={{ color: "#fff" }}>
+                                      {messageList[item].text}
+                                    </Typography>
+                                    &nbsp;
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        justifyContent: "flex-end",
+                                        flexDirection: "row",
+                                      }}>
+                                      <Typography sx={{ color: "#fff" }}>
+                                        {messageList[item].timestamp}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </div>
+                              </Grid>
+                            </Grid>
                           </Box>
-                        </Grid>
-                      </Grid>
-                    </Box>
+                        );
+                      }
+                      if (
+                        messageList[item].senderId == selectedChat.user_id &&
+                        messageList[item].receiver_id.user_id ==
+                          currentUserData.user_id
+                      ) {
+                        return (
+                          <Box mb={1} key={key}>
+                            <Grid container gap={2} alignItems="flex-start">
+                              <Grid item md={3}>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "flex-start", // set justify content to flex-end
+                                    flexDirection: "row",
+                                  }}>
+                                  <Box
+                                    sx={{
+                                      backgroundColor: "#fff   ",
+                                      borderRadius: "35px 35px 35px 10px",
+                                      p: 2,
+                                      maxWidth: "80vw",
+                                      overflow: "hidden",
+                                      wordWrap: "break-word",
+                                    }}>
+                                    <Typography sx={{ color: "#232323" }}>
+                                      {messageList[item].text}
+                                    </Typography>
+                                    &nbsp;
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        justifyContent: "flex-end", // set justify content to flex-end
+                                        flexDirection: "row",
+                                      }}>
+                                      <Typography sx={{ color: "#232323" }}>
+                                        {messageList[item].timestamp}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </div>
+                              </Grid>
+                            </Grid>
+                          </Box>
+                        );
+                      }
+                    })}
                   </Box>
 
                   {/* Bottom Chat */}
@@ -809,7 +999,7 @@ export default function Home() {
                       fullWidth
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
-                      onKeyPress={(e) => {
+                      onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           sendMessage();
                         }

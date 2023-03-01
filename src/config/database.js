@@ -4,9 +4,6 @@ import {
   ref,
   set,
   update,
-  orderByChild,
-  equalTo,
-  get,
 } from "firebase/database";
 
 export const getData = (collection, cb) => {
@@ -16,9 +13,9 @@ export const getData = (collection, cb) => {
   return onValue(starCountRef, cb);
 };
 
-export const sendData = (collection, cb) => {
+export const sendData = (table, cb) => {
   const db = database;
-  const Ref = ref(db, collection);
+  const Ref = ref(db, table);
 
   return set(Ref, cb);
 };

@@ -11,6 +11,7 @@ import {
 import { auth } from "@/config/firebase";
 import * as useDb from "@/config/database";
 import Alert from "@mui/material/Alert";
+import { updateData } from "@/config/database";
 //
 import {
   Card,
@@ -112,24 +113,30 @@ const Login = () => {
               console.log("NOT VERIFIED");
             } else {
               const user = userCredential.user;
+              // console.log("user====", user);
+              // useDb.sendData("users", {
+              //   ...usersList,
+              //   [user.uid]: {
+              //     emailVerified: user.emailVerified,
+              //     email: user.email,
+              //     user_id: user.uid,
+              //     profile_picture: "null",
+              //     fullname: user.displayName,
+              //     providerId: "email/pass",
+              //     created_at:
+              //       user?.auth?.currentUser?.reloadUserInfo?.createdAt,
+              //     password:
+              //       user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
+              //     is_online: true,
+              //     friend_list: "null",
+              //   },
+              // });
 
-              useDb.sendData("users", {
-                ...usersList,
-                [user.uid]: {
-                  emailVerified: user.emailVerified,
-                  email: user.email,
-                  user_id: user.uid,
-                  profile_picture: "null",
-                  fullname: user.displayName,
-                  providerId: "email/pass",
-                  created_at:
-                    user?.auth?.currentUser?.reloadUserInfo?.createdAt,
-                  password:
-                    user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
-                  is_online: true,
-                  friend_list: "null",
-                },
-              });
+              updateData(`/users/${user.uid}/is_online`, true).catch(
+                (error) => {
+                  console.log(error);
+                }
+              );
 
               setIsVerified(false);
               setIsErrorEmail(false);

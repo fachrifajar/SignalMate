@@ -179,20 +179,21 @@ const Register = () => {
         }).then(() => {
           setIsLoading(false);
 
-          // useDb.sendData("users", {
-          //   ...usersList,
-          //   [user.uid]: {
-          //     emailVerified: user.emailVerified,
-          //     email: user.email,
-          //     user_id: user.uid,
-          //     profile_picture: "null",
-          //     fullname: user.displayName,
-          //     providerId: "email/pass",
-          //     created_at: user?.auth?.currentUser?.reloadUserInfo?.createdAt,
-          //     password: user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
-          //     is_online: false,
-          //   },
-          // });
+          useDb.sendData("users", {
+            ...usersList,
+            [user.uid]: {
+              emailVerified: user.emailVerified,
+              email: user.email,
+              user_id: user.uid,
+              profile_picture: "null",
+              fullname: user.displayName,
+              providerId: "email/pass",
+              created_at: user?.auth?.currentUser?.reloadUserInfo?.createdAt,
+              password: user?.auth?.currentUser?.reloadUserInfo?.passwordHash,
+              is_online: false,
+              friend_list: "null",
+            },
+          });
 
           console.log("auth,", auth);
           console.log("email,", email);
