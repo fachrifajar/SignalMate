@@ -24,15 +24,8 @@ import * as authRedux from "@/store/reducer/auth";
 import { styled } from "@mui/material/styles";
 import {
   Grid,
-  Container,
   Typography,
-  IconButton,
-  Menu,
-  MenuItem,
-  Box,
-  Avatar,
   TextField,
-  InputAdornment,
   Card,
   CardContent,
   Button,
@@ -62,37 +55,27 @@ const MyTextField = styled(TextField)({
 
 export default function Home(props) {
   const router = useRouter();
-  const store = useSelector((state) => state);
-  console.log("storeee---", store);
+
   //REDUX
   const dispatch = useDispatch();
 
-  // let x= (props.profile);
-  // console.log(JSON.parse(x))
-  const jakartaTime = new Date().toLocaleString("en-US", {
-    timeZone: "Asia/Jakarta",
-    hour12: true,
-    hour: "numeric",
-    minute: "numeric",
-  });
-
   const [currentUserData, SetCurrentUserData] = React.useState([]);
-  const [currentId, setCurrentId] = React.useState("");
-  const [success, setSuccess] = React.useState(false);
   const [allUserData, setAllUserData] = React.useState(null);
+  const [newFriendList, setNewFriendList] = React.useState(null);
+  const [findFriend, setFindFriend] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+  const [reqFriends, setReqFriends] = React.useState("");
   const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState("");
+  const [errMsg, setErrMsg] = React.useState("");
+  const [validFriendList, setValidFriendList] = React.useState([]);
 
-  const [name, setName] = React.useState("");
-  const [profilePict, setProfilePicture] = React.useState("");
   let temp = [];
 
   React.useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         const uid = user.uid;
-        setCurrentId(uid);
 
         useDb.getData(`users`, (snapshot) => {
           const data = snapshot.val();
@@ -102,6 +85,16 @@ export default function Home(props) {
           });
           setAllUserData(usersArray);
           SetCurrentUserData(data[uid]);
+          let targetData = data[uid];
+
+          for (let i = 0; i < usersArray.length; i++) {
+            for (let j = 0; j < targetData.friend_list.length; j++) {
+              if (usersArray[i].user_id == targetData.friend_list[j]) {
+                temp.push(usersArray[i]);
+                setValidFriendList(temp);
+              }
+            }
+          }
         });
       } else {
         // User is signed out
@@ -109,6 +102,109 @@ export default function Home(props) {
       }
     });
   }, []);
+
+  const closeTrigger = () => {
+    router.push("/");
+  };
+
+  let targetId;
+
+  const addFriendList = () => {
+    setIsLoading(true);
+
+    if (allUserData) {
+      for (let i = 0; i < allUserData.length; i++) {
+        if (allUserData[i].email == reqFriends) {
+          setIsError(false);
+          setIsLoading(false);
+          setSuccess(true);
+          setNewFriendList(allUserData[i].email);
+
+          targetId = allUserData[i].user_id;
+        }
+      }
+      if (newFriendList == null) {
+        setIsError(true);
+        setErrMsg("User not found!");
+        setIsLoading(false);
+        setSuccess(false);
+      }
+
+      if (reqFriends == currentUserData.email) {
+        setIsError(true);
+        setErrMsg("Cannot add yourself as a friend");
+        setIsLoading(false);
+        setSuccess(false);
+      }
+
+      let alreadyFriend = 0;
+      if (
+        currentUserData["friend_list"] !== "null" ||
+        currentUserData["friend_list"]
+      ) {
+        for (let i = 0; i < currentUserData["friend_list"].length; i++) {
+          if (currentUserData["friend_list"][i] == targetId) {
+            alreadyFriend++;
+          }
+        }
+      }
+
+      if (alreadyFriend > 0) {
+        setIsError(true);
+        setSuccess(false);
+        setErrMsg("User already your friend");
+        return;
+      }
+
+      if (newFriendList && newFriendList.length > 0) {
+        updateFriendList(targetId);
+      }
+    }
+  };
+
+  const updateFriendList = (targetId) => {
+    useDb.getData(
+      `/users/${currentUserData.user_id}/friend_list`,
+      (snapshot) => {
+        let currentFriendList = snapshot.val() || [];
+
+        if (reqFriends === currentUserData.email) {
+          setIsError(true);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!Array.isArray(currentFriendList)) {
+          currentFriendList = [];
+        }
+
+        if (!currentFriendList.includes(targetId)) {
+          currentFriendList.push(targetId);
+        }
+
+        updateData(
+          `/users/${currentUserData.user_id}/friend_list`,
+          currentFriendList
+        )
+          .then(() => {
+            setNewFriendList([]);
+            setIsLoading(false);
+            setSuccess(true);
+            setFindFriend(false);
+
+            updateData(`/users/${targetId}/friend_list`, [
+              currentUserData.user_id,
+            ]);
+          })
+          .catch((error) => {
+            console.error("Error updating friend list:", error);
+            setIsError(true);
+            setIsLoading(false);
+            setSuccess(false);
+          });
+      }
+    );
+  };
 
   React.useEffect(() => {
     const validateAcc = props.profile;
@@ -118,62 +214,10 @@ export default function Home(props) {
     }
   }, []);
 
-  const closeTrigger = () => {
-    router.push("/");
-  };
-
-  const handleUpdate = () => {
-    if (name) {
-      const usernameRegex = /^[a-z][a-z0-9\s]{3,30}[a-z0-9]$/;
-
-      if (!usernameRegex.test(name)) {
-        setErrorMessage(
-          "Name must start with a lowercase letter, contain only letters, numbers, underscores, and spaces, and be between 3-30 characters long."
-        );
-        setIsError(true);
-        console.log(errorMessage);
-        return;
-      }
-
-      updateData(`/users/${currentUserData.user_id}/fullname`, name)
-        .then(() => {
-          window.location.reload();
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-
-      user
-        .updateProfile({
-          displayName: name,
-        })
-        .then(() => {
-          console.log("sukses update nama");
-          setSuccess(true);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-    if (profilePict) {
-      updateData(
-        `/users/${currentUserData.user_id}/profile_picture`,
-        profilePict
-      )
-        .then(() => {
-          window.location.reload();
-          setSuccess(true);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-  };
-
   return (
     <>
       <Head>
-        <title>Profile</title>
+        <title>Add Friends</title>
         <meta name="description" content="Generated by create next app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/main-logo.png" />
@@ -235,7 +279,7 @@ export default function Home(props) {
                       fontSize: 23,
                       marginRight: "20px",
                     }}>
-                    Edit Profile
+                    Add Friend
                   </span>
                 </Typography>
 
@@ -243,7 +287,7 @@ export default function Home(props) {
                   <Alert
                     severity="success"
                     sx={{ display: "flex", justifyContent: "center" }}>
-                    Profile updated successfully!
+                    Friend added successfully!
                   </Alert>
                 )}
 
@@ -252,42 +296,27 @@ export default function Home(props) {
                     error
                     fullWidth
                     id="standard-error-helper-text"
-                    label="Fullname"
-                    helperText={errorMessage}
-                    onChange={(event) => setName(event.target.value)}
-                    margin="normal"
-                    variant="standard"
+                    label="By Email*"
+                    helperText={errMsg}
+                    onChange={(event) => setReqFriends(event.target.value)}
                   />
                 ) : (
                   <MyTextField
                     id="outlined-helperText"
-                    margin="normal"
-                    variant="standard"
                     fullWidth
-                    label="Fullname"
-                    placeholder="John Doe"
-                    sx={{ marginTop: "10px" }}
-                    onChange={(event) => setName(event.target.value)}
+                    label="By Email*"
+                    placeholder="xxx@gmail.com"
+                    sx={{ marginTop: "10px", marginBottom: "20px" }}
+                    onChange={(event) => setReqFriends(event.target.value)}
                   />
                 )}
-
-                <MyTextField
-                  id="outlined-helperText"
-                  margin="normal"
-                  variant="standard"
-                  fullWidth
-                  label="Profile Picture"
-                  placeholder="Insert your link "
-                  sx={{ marginTop: "10px", marginBottom: "20px" }}
-                  onChange={(event) => setProfilePicture(event.target.value)}
-                />
 
                 <MyButton
                   variant="contained"
                   color="primary"
                   fullWidth
-                  onClick={handleUpdate}>
-                  Update
+                  onClick={addFriendList}>
+                  Add
                 </MyButton>
                 {/* {isLoading ? (
                     <LoadingButton

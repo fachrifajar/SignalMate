@@ -55,7 +55,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { current } from "@reduxjs/toolkit";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { CompareSharp } from "@mui/icons-material";
-import CircularProgress from '@mui/material/CircularProgress';
+import CircularProgress from "@mui/material/CircularProgress";
 
 const MyButton = styled(Button)({
   width: "100px",
@@ -113,13 +113,6 @@ export default function Home(props) {
   const [keyword, setKeyword] = React.useState("");
   const [currentUserData, SetCurrentUserData] = React.useState([]);
   const [allUserData, setAllUserData] = React.useState(null);
-  const [newFriendList, setNewFriendList] = React.useState(null);
-  const [findFriend, setFindFriend] = React.useState(false);
-  const [success, setSuccess] = React.useState(false);
-  const [reqFriends, setReqFriends] = React.useState("");
-  const [isError, setIsError] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [errMsg, setErrMsg] = React.useState("");
   const [validFriendList, setValidFriendList] = React.useState([]);
 
   const [currentId, setCurrentId] = React.useState("");
@@ -237,11 +230,11 @@ export default function Home(props) {
   }, [selectedChat, allMessage]);
 
   // console.log(selectedTimestampId);
-  console.log("validFriendList---",validFriendList)
-  console.log("allMessage--",allMessage)
+  console.log("validFriendList---", validFriendList);
+  console.log("allMessage--", allMessage);
 
   const result = {};
-  const result2 = {}
+  const result2 = {};
   let getLastTime;
   if (validFriendList && allMessage) {
     validFriendList.forEach((friend) => {
@@ -272,7 +265,7 @@ export default function Home(props) {
     // console.log("result2--",result2)
 
     const combinedObject = Object.assign({}, result, result2);
-  
+
     for (let key in combinedObject) {
       combinedObject[key] = Array.from(new Set(combinedObject[key])).sort();
     }
@@ -328,118 +321,11 @@ export default function Home(props) {
   };
 
   const addFriendTrigger = () => {
-    setFindFriend(true);
-    setSuccess(false);
-    setIsError(false);
+    router.push("/add");
   };
 
   const profileTrigger = () => {
     router.push("/profile");
-  }
-
-  const closeTrigger = () => {
-    setFindFriend(false);
-    setSuccess(false);
-    setIsError(false);
-  };
-
-  let targetId;
-
-  const addFriendList = () => {
-    setIsLoading(true);
-
-    if (allUserData) {
-      for (let i = 0; i < allUserData.length; i++) {
-        if (allUserData[i].email == reqFriends) {
-          setIsError(false);
-          setIsLoading(false);
-          setSuccess(true);
-          setNewFriendList(allUserData[i].email);
-
-          targetId = allUserData[i].user_id;
-        }
-      }
-      if (newFriendList == null) {
-        setIsError(true);
-        setErrMsg("User not found!");
-        setIsLoading(false);
-        setSuccess(false);
-      }
-
-      if (reqFriends == currentUserData.email) {
-        setIsError(true);
-        setErrMsg("Cannot add yourself as a friend");
-        setIsLoading(false);
-        setSuccess(false);
-      }
-
-      let alreadyFriend = 0;
-      if (
-        currentUserData["friend_list"] !== "null" ||
-        currentUserData["friend_list"]
-      ) {
-        for (let i = 0; i < currentUserData["friend_list"].length; i++) {
-          if (currentUserData["friend_list"][i] == targetId) {
-            alreadyFriend++;
-          }
-        }
-      }
-
-      if (alreadyFriend > 0) {
-        setIsError(true);
-        setSuccess(false);
-        setErrMsg("User already your friend");
-        return;
-      }
-
-      if (newFriendList && newFriendList.length > 0) {
-        updateFriendList(targetId);
-      }
-    }
-  };
-
-  const updateFriendList = (targetId) => {
-    useDb.getData(
-      `/users/${currentUserData.user_id}/friend_list`,
-      (snapshot) => {
-        let currentFriendList = snapshot.val() || [];
-
-        if (reqFriends === currentUserData.email) {
-          setIsError(true);
-          setIsLoading(false);
-          return;
-        }
-
-        if (!Array.isArray(currentFriendList)) {
-          currentFriendList = [];
-        }
-
-        if (!currentFriendList.includes(targetId)) {
-          currentFriendList.push(targetId);
-        }
-
-        updateData(
-          `/users/${currentUserData.user_id}/friend_list`,
-          currentFriendList
-        )
-          .then(() => {
-            setNewFriendList([]);
-            setIsLoading(false);
-            setSuccess(true);
-            setFindFriend(false);
-
-            updateData(`/users/${targetId}/friend_list`, [
-              currentUserData.user_id,
-            ]);
-          })
-          .catch((error) => {
-            console.error("Error updating friend list:", error);
-            setIsError(true);
-            setIsLoading(false);
-            setSuccess(false);
-          });
-      }
-    );
   };
 
   const handleLogout = () => {
@@ -491,168 +377,52 @@ export default function Home(props) {
           `}
         </style>
       </Head>
-      {findFriend ? (
-        <main>
+      <main>
+        <Grid container height="100vh">
           <Grid
-            container
-            justifyContent="center"
-            alignItems="center"
-            height="100vh">
-            <Grid item xs={10} sm={8} md={6}>
-              <Card
+            item
+            md={3}
+            sx={{
+              boxShadow: "1px 1px 5px 0px rgba(0,0,0,0.52)",
+              backgroundColor: "#FFFFFF",
+              height: "100vh",
+            }}>
+            <Container sx={{ mt: "20px" }}>
+              <Typography
+                variant="h4"
+                component="h2"
                 sx={{
-                  width: "50vh",
-                  height: "auto",
-                  margin: "auto",
+                  color: "#7E98DF",
+                  fontWeight: 500,
                   display: "flex",
-                  justifyContent: "center",
                   alignItems: "center",
-                  borderRadius: "20px",
                 }}>
-                <CardContent
-                  style={{
-                    textAlign: "center",
-                    justifyContent: "center",
-                    padding: "50px",
-                    overflowY: "hidden",
+                SignalMate
+                <IconButton
+                  aria-label="menu"
+                  onClick={handleClick}
+                  sx={{ color: "#7E98DF", marginLeft: "auto" }}>
+                  <MenuIcon />
+                </IconButton>
+                <Menu
+                  id="simple-menu"
+                  anchorEl={anchorEl}
+                  keepMounted
+                  open={Boolean(anchorEl)}
+                  onClose={handleClose}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
                   }}>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      marginBottom: "20px",
-                    }}>
-                    <ArrowBackIosNewIcon
-                      sx={{ mr: 1, color: "#7E98DF", cursor: "pointer" }}
-                      onClick={closeTrigger}
-                    />
-                    <span
-                      style={{
-                        flexGrow: 1,
-                        textAlign: "center",
-                        color: "#7E98DF",
-                        fontWeight: "bold",
-                        fontSize: 23,
-                        marginRight: "20px",
-                      }}>
-                      Add Friend
-                    </span>
-                  </Typography>
-
-                  {success && (
-                    <Alert
-                      severity="success"
-                      sx={{ display: "flex", justifyContent: "center" }}>
-                      Friend added successfully!
-                    </Alert>
-                  )}
-
-                  {isError ? (
-                    <MyTextField
-                      error
-                      fullWidth
-                      id="standard-error-helper-text"
-                      label="By Email*"
-                      helperText={errMsg}
-                      // variant="standard"
-                      onChange={(event) => setReqFriends(event.target.value)}
-                    />
-                  ) : (
-                    <MyTextField
-                      id="outlined-helperText"
-                      fullWidth
-                      label="By Email*"
-                      placeholder="xxx@gmail.com"
-                      sx={{ marginTop: "10px", marginBottom: "20px" }}
-                      onChange={(event) => setReqFriends(event.target.value)}
-                    />
-                  )}
-
-                  <MyButton
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    onClick={addFriendList}>
-                    Add
-                  </MyButton>
-                  {/* {isLoading ? (
-                    <LoadingButton
-                      loading={isLoading}
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      sx={{
-                        width: "100px",
-                        borderRadius: "20px",
-                        marginTop: "20px",
-                        background: "#7E98DF",
-                        color: "white",
-                      }}
-                      onClick={addFriendList}>
-                      {isLoading ? "Loading..." : "Add"}
-                    </LoadingButton>
-                  ) : (
-                    <MyButton
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      onClick={addFriendList}>
-                      Add
-                    </MyButton>
-                  )} */}
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </main>
-      ) : (
-        <main>
-          <Grid container height="100vh">
-            <Grid
-              item
-              md={3}
-              sx={{
-                boxShadow: "1px 1px 5px 0px rgba(0,0,0,0.52)",
-                backgroundColor: "#FFFFFF",
-                height: "100vh",
-              }}>
-              <Container sx={{ mt: "20px" }}>
-                <Typography
-                  variant="h4"
-                  component="h2"
-                  sx={{
-                    color: "#7E98DF",
-                    fontWeight: 500,
-                    display: "flex",
-                    alignItems: "center",
-                  }}>
-                  SignalMate
-                  <IconButton
-                    aria-label="menu"
-                    onClick={handleClick}
-                    sx={{ color: "#7E98DF", marginLeft: "auto" }}>
-                    <MenuIcon />
-                  </IconButton>
-                  <Menu
-                    id="simple-menu"
-                    anchorEl={anchorEl}
-                    keepMounted
-                    open={Boolean(anchorEl)}
-                    onClose={handleClose}
-                    anchorOrigin={{
-                      vertical: "bottom",
-                      horizontal: "left",
-                    }}>
-                    <MenuItem onClick={handleClose && addFriendTrigger}>
-                      <PersonAddIcon sx={{ marginRight: "8px" }} />
-                      Add Friends
-                    </MenuItem>
-                    <MenuItem onClick={handleClose && profileTrigger}>
-                      <ManageAccountsIcon sx={{ marginRight: "8px" }} />
-                      Profile
-                    </MenuItem>
-                    {/* <MenuItem onClick={handleClose}>
+                  <MenuItem onClick={handleClose && addFriendTrigger}>
+                    <PersonAddIcon sx={{ marginRight: "8px" }} />
+                    Add Friends
+                  </MenuItem>
+                  <MenuItem onClick={handleClose && profileTrigger}>
+                    <ManageAccountsIcon sx={{ marginRight: "8px" }} />
+                    Profile
+                  </MenuItem>
+                  {/* <MenuItem onClick={handleClose}>
                       <PhoneIcon sx={{ marginRight: "8px" }} />
                       Calls
                     </MenuItem>
@@ -664,192 +434,192 @@ export default function Home(props) {
                       <SettingsIcon sx={{ marginRight: "8px" }} />
                       Settings
                     </MenuItem> */}
-                    <MenuItem onClick={handleClose && handleLogout}>
-                      <LogoutIcon
-                        sx={{ marginRight: "8px" }}
-                        onClick={handleLogout}
-                      />
-                      Logout
-                    </MenuItem>
-                  </Menu>
-                </Typography>
+                  <MenuItem onClick={handleClose && handleLogout}>
+                    <LogoutIcon
+                      sx={{ marginRight: "8px" }}
+                      onClick={handleLogout}
+                    />
+                    Logout
+                  </MenuItem>
+                </Menu>
+              </Typography>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginTop: "40px",
-                  }}>
-                  <InputBase
-                    placeholder="Type your message..."
-                    startAdornment={<SearchIcon />}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "flex-start",
-                      backgroundColor: "#FAFAFA",
-                      borderRadius: "20px",
-                      height: "40px",
-                      maxWidth: "250px",
-                      flexGrow: 1,
-                    }}
-                    inputProps={{ "aria-label": "search" }}
-                  />
-                  <span
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      color: "#7E98DF",
-                      marginLeft: "auto",
-                      cursor: "pointer",
-                    }}>
-                    <AddIcon fontSize="large" />
-                  </span>
-                </div>
-
-                <Box
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: "40px",
+                }}>
+                <InputBase
+                  placeholder="Type your message..."
+                  startAdornment={<SearchIcon />}
                   sx={{
                     display: "flex",
-                    justifyContent: "space-evenly",
-                    mt: "20px",
-                  }}>
-                  <WordBox
-                    className={active === "All" ? "active" : ""}
-                    onClick={() => handleClickWord("All")}>
-                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                      All
-                    </Typography>
-                  </WordBox>
-                  <WordBox
-                    className={active === "Important" ? "active" : ""}
-                    onClick={() => handleClickWord("Important")}>
-                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                      Important
-                    </Typography>
-                  </WordBox>
-                  <WordBox
-                    className={active === "Unread" ? "active" : ""}
-                    onClick={() => handleClickWord("Unread")}>
-                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                      Unread
-                    </Typography>
-                  </WordBox>
-                </Box>
-
-                <div
+                    justifyContent: "flex-start",
+                    backgroundColor: "#FAFAFA",
+                    borderRadius: "20px",
+                    height: "40px",
+                    maxWidth: "250px",
+                    flexGrow: 1,
+                  }}
+                  inputProps={{ "aria-label": "search" }}
+                />
+                <span
                   style={{
-                    width: "100%",
-                    height: "100vh",
-                    overflow: "hidden",
-                    overflowY: "scroll",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    color: "#7E98DF",
+                    marginLeft: "auto",
+                    cursor: "pointer",
                   }}>
-                  {validFriendList.map((item, key) => {
-                    const notification = notificationsArray.find(
-                      (n) => n.id === item.user_id
-                    );
-                    const notifCount = notification
-                      ? notification.message.notifCount
-                      : 0;
+                  <AddIcon fontSize="large" />
+                </span>
+              </div>
 
-                    const getTime = getLastTime.find(
-                      (n) => n.id === item.user_id
-                    );
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-evenly",
+                  mt: "20px",
+                }}>
+                <WordBox
+                  className={active === "All" ? "active" : ""}
+                  onClick={() => handleClickWord("All")}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    All
+                  </Typography>
+                </WordBox>
+                <WordBox
+                  className={active === "Important" ? "active" : ""}
+                  onClick={() => handleClickWord("Important")}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    Important
+                  </Typography>
+                </WordBox>
+                <WordBox
+                  className={active === "Unread" ? "active" : ""}
+                  onClick={() => handleClickWord("Unread")}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    Unread
+                  </Typography>
+                </WordBox>
+              </Box>
 
-                    return (
-                      <Box
-                        key={key}
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        padding={2}
-                        marginTop="20px"
-                        onClick={() => {
-                          setIsClicked(true);
-                          setSelectedChat(item);
-                          updateNotif();
-                        }}>
-                        <Box display="flex" alignItems="center">
-                          {item.profile_picture !== "null" ? (
-                            <img
-                              alt="user photo"
-                              src={item.profile_picture}
-                              style={{
-                                width: 56,
-                                height: 56,
-                                marginRight: "15px",
-                                borderRadius: "50%",
-                              }}
-                            />
-                          ) : (
-                            <Avatar
-                              sx={{ width: 56, height: 56, marginRight: 2 }}
-                              alt="User Avatar">
-                              {item.fullname[0].toUpperCase()}
-                            </Avatar>
-                          )}
+              <div
+                style={{
+                  width: "100%",
+                  height: "100vh",
+                  overflow: "hidden",
+                  overflowY: "scroll",
+                }}>
+                {validFriendList.map((item, key) => {
+                  const notification = notificationsArray.find(
+                    (n) => n.id === item.user_id
+                  );
+                  const notifCount = notification
+                    ? notification.message.notifCount
+                    : 0;
 
-                          <Box>
-                            <Typography variant="subtitle1">
-                              {item.fullname}
+                  const getTime = getLastTime.find(
+                    (n) => n.id === item.user_id
+                  );
+
+                  return (
+                    <Box
+                      key={key}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      padding={2}
+                      marginTop="20px"
+                      onClick={() => {
+                        setIsClicked(true);
+                        setSelectedChat(item);
+                        updateNotif();
+                      }}>
+                      <Box display="flex" alignItems="center">
+                        {item.profile_picture !== "null" ? (
+                          <img
+                            alt="user photo"
+                            src={item.profile_picture}
+                            style={{
+                              width: 56,
+                              height: 56,
+                              marginRight: "15px",
+                              borderRadius: "50%",
+                            }}
+                          />
+                        ) : (
+                          <Avatar
+                            sx={{ width: 56, height: 56, marginRight: 2 }}
+                            alt="User Avatar">
+                            {item.fullname[0].toUpperCase()}
+                          </Avatar>
+                        )}
+
+                        <Box>
+                          <Typography variant="subtitle1">
+                            {item.fullname}
+                          </Typography>
+                          {item.is_online ? (
+                            <Typography
+                              sx={{ color: "#7E98DF" }}
+                              component="span"
+                              variant="body2">
+                              Online
                             </Typography>
-                            {item.is_online ? (
-                              <Typography
-                                sx={{ color: "#7E98DF" }}
-                                component="span"
-                                variant="body2">
-                                Online
-                              </Typography>
-                            ) : null}
-                          </Box>
+                          ) : null}
                         </Box>
-                        {notifCount !== 0 ? (
-                          <Box
-                            display="flex"
-                            flexDirection="column"
-                            alignItems="flex-end"
-                            justifyContent="center">
-                            {getTime ? (
-                              <>
-                                <Typography variant="subtitle2">
-                                  {getTime.value}
-                                </Typography>
-                                <Box
-                                  sx={{
-                                    backgroundColor: "#7E98DF",
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: "50%",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    color: "#fff",
-                                    fontSize: "0.9rem",
-                                    fontWeight: "bold",
-                                    marginTop: 1,
-                                  }}>
-                                  {notifCount}
-                                </Box>
-                              </>
-                            ) : (
-                              <CircularProgress size={16} thickness={6} />
-                            )}
-                          </Box>
-                        ) : getTime ? (
-                          <Box
-                            display="flex"
-                            flexDirection="column"
-                            alignItems="flex-end"
-                            justifyContent="center">
-                            <Typography variant="subtitle2">
-                              {getTime.value}
-                            </Typography>
-                          </Box>
-                        ) : null}
                       </Box>
-                    );
-                  })}
+                      {notifCount !== 0 ? (
+                        <Box
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="flex-end"
+                          justifyContent="center">
+                          {getTime ? (
+                            <>
+                              <Typography variant="subtitle2">
+                                {getTime.value}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  backgroundColor: "#7E98DF",
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "#fff",
+                                  fontSize: "0.9rem",
+                                  fontWeight: "bold",
+                                  marginTop: 1,
+                                }}>
+                                {notifCount}
+                              </Box>
+                            </>
+                          ) : (
+                            <CircularProgress size={16} thickness={6} />
+                          )}
+                        </Box>
+                      ) : getTime ? (
+                        <Box
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="flex-end"
+                          justifyContent="center">
+                          <Typography variant="subtitle2">
+                            {getTime.value}
+                          </Typography>
+                        </Box>
+                      ) : null}
+                    </Box>
+                  );
+                })}
 
-                  <style>
-                    {`
+                <style>
+                  {`
                 ::-webkit-scrollbar {
                   width: 0.1em;
                 }
@@ -857,210 +627,209 @@ export default function Home(props) {
                   background-color: rgba(0, 0, 0, 0.2);
                 }
               `}
-                  </style>
-                </div>
-              </Container>
-            </Grid>
+                </style>
+              </div>
+            </Container>
+          </Grid>
 
-            <Grid item md={9} sx={{ backgroundColor: "#DADADA" }}>
-              {!isClicked && (
-                <Typography
-                  sx={{
-                    color: "#848484",
-                    display: "flex",
-                    height: "100vh",
-                    width: "100%",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}>
-                  Please select a chat to start messaging
-                </Typography>
-              )}
+          <Grid item md={9} sx={{ backgroundColor: "#DADADA" }}>
+            {!isClicked && (
+              <Typography
+                sx={{
+                  color: "#848484",
+                  display: "flex",
+                  height: "100vh",
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}>
+                Please select a chat to start messaging
+              </Typography>
+            )}
 
-              {isClicked && (
-                <React.Fragment>
-                  {/* Appbar */}
-                  <Box sx={{ backgroundColor: "#fff", px: 5, py: 2 }}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      {selectedChat.profile_picture !== "null" ? (
-                        <Avatar
-                          alt="user photo"
-                          src={selectedChat.profile_picture}
-                          style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: "50%",
-                          }}
-                        />
-                      ) : (
-                        <Avatar
-                          alt={selectedChat.fullname.toUpperCase()}
-                          src="/static/images/avatar/1.jpg"
-                          sx={{ width: 48, height: 48 }}
-                        />
-                      )}
+            {isClicked && (
+              <React.Fragment>
+                {/* Appbar */}
+                <Box sx={{ backgroundColor: "#fff", px: 5, py: 2 }}>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    {selectedChat.profile_picture !== "null" ? (
+                      <Avatar
+                        alt="user photo"
+                        src={selectedChat.profile_picture}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: "50%",
+                        }}
+                      />
+                    ) : (
+                      <Avatar
+                        alt={selectedChat.fullname.toUpperCase()}
+                        src="/static/images/avatar/1.jpg"
+                        sx={{ width: 48, height: 48 }}
+                      />
+                    )}
 
-                      <div>
-                        <Typography variant="subtitle1">
-                          {selectedChat.fullname}
+                    <div>
+                      <Typography variant="subtitle1">
+                        {selectedChat.fullname}
+                      </Typography>
+                      {selectedChat.is_online ? (
+                        <Typography
+                          sx={{ color: "#7E98DF" }}
+                          component="span"
+                          variant="body2">
+                          Online
                         </Typography>
-                        {selectedChat.is_online ? (
-                          <Typography
-                            sx={{ color: "#7E98DF" }}
-                            component="span"
-                            variant="body2">
-                            Online
-                          </Typography>
-                        ) : null}
-                      </div>
-                    </Box>
+                      ) : null}
+                    </div>
                   </Box>
+                </Box>
 
-                  {/* Box Chat */}
-                  <Box px={5} py={3} sx={{ height: "80vh", overflowY: "auto" }}>
-                    {/* Left Chat */}
-                    {messageKey.map((item, key) => {
-                      if (
-                        messageList[item].senderId == currentUserData.user_id &&
-                        messageList[item].receiver_id.user_id ==
-                          selectedChat.user_id
-                      ) {
-                        return (
-                          <Box mb={1} key={key}>
-                            <Grid
-                              container
-                              gap={2}
-                              direction="row-reverse"
-                              alignItems="flex-end">
-                              <Grid item md={2}>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "flex-end", // set justify content to flex-end
-                                    flexDirection: "row",
+                {/* Box Chat */}
+                <Box px={5} py={3} sx={{ height: "80vh", overflowY: "auto" }}>
+                  {/* Left Chat */}
+                  {messageKey.map((item, key) => {
+                    if (
+                      messageList[item].senderId == currentUserData.user_id &&
+                      messageList[item].receiver_id.user_id ==
+                        selectedChat.user_id
+                    ) {
+                      return (
+                        <Box mb={1} key={key}>
+                          <Grid
+                            container
+                            gap={2}
+                            direction="row-reverse"
+                            alignItems="flex-end">
+                            <Grid item md={2}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "flex-end", // set justify content to flex-end
+                                  flexDirection: "row",
+                                }}>
+                                <Box
+                                  sx={{
+                                    backgroundColor: "#7E98DF",
+                                    borderRadius: "35px 35px 10px 35px",
+                                    p: 2,
+                                    maxWidth: "80vw",
+                                    overflow: "hidden",
+                                    wordWrap: "break-word",
                                   }}>
+                                  <Typography sx={{ color: "#fff" }}>
+                                    {messageList[item].text}
+                                  </Typography>
+                                  &nbsp;
                                   <Box
                                     sx={{
-                                      backgroundColor: "#7E98DF",
-                                      borderRadius: "35px 35px 10px 35px",
-                                      p: 2,
-                                      maxWidth: "80vw",
-                                      overflow: "hidden",
-                                      wordWrap: "break-word",
+                                      display: "flex",
+                                      justifyContent: "flex-end",
+                                      flexDirection: "row",
                                     }}>
                                     <Typography sx={{ color: "#fff" }}>
-                                      {messageList[item].text}
+                                      {messageList[item].timestamp}
                                     </Typography>
-                                    &nbsp;
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        justifyContent: "flex-end",
-                                        flexDirection: "row",
-                                      }}>
-                                      <Typography sx={{ color: "#fff" }}>
-                                        {messageList[item].timestamp}
-                                      </Typography>
-                                    </Box>
                                   </Box>
-                                </div>
-                              </Grid>
+                                </Box>
+                              </div>
                             </Grid>
-                          </Box>
-                        );
-                      }
-                      if (
-                        messageList[item].senderId == selectedChat.user_id &&
-                        messageList[item].receiver_id.user_id ==
-                          currentUserData.user_id
-                      ) {
-                        return (
-                          <Box mb={1} key={key}>
-                            <Grid container gap={2} alignItems="flex-start">
-                              <Grid item md={3}>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "flex-start", // set justify content to flex-end
-                                    flexDirection: "row",
+                          </Grid>
+                        </Box>
+                      );
+                    }
+                    if (
+                      messageList[item].senderId == selectedChat.user_id &&
+                      messageList[item].receiver_id.user_id ==
+                        currentUserData.user_id
+                    ) {
+                      return (
+                        <Box mb={1} key={key}>
+                          <Grid container gap={2} alignItems="flex-start">
+                            <Grid item md={3}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "flex-start", // set justify content to flex-end
+                                  flexDirection: "row",
+                                }}>
+                                <Box
+                                  sx={{
+                                    backgroundColor: "#fff   ",
+                                    borderRadius: "35px 35px 35px 10px",
+                                    p: 2,
+                                    maxWidth: "80vw",
+                                    overflow: "hidden",
+                                    wordWrap: "break-word",
                                   }}>
+                                  <Typography sx={{ color: "#232323" }}>
+                                    {messageList[item].text}
+                                  </Typography>
+                                  &nbsp;
                                   <Box
                                     sx={{
-                                      backgroundColor: "#fff   ",
-                                      borderRadius: "35px 35px 35px 10px",
-                                      p: 2,
-                                      maxWidth: "80vw",
-                                      overflow: "hidden",
-                                      wordWrap: "break-word",
+                                      display: "flex",
+                                      justifyContent: "flex-end", // set justify content to flex-end
+                                      flexDirection: "row",
                                     }}>
                                     <Typography sx={{ color: "#232323" }}>
-                                      {messageList[item].text}
+                                      {messageList[item].timestamp}
                                     </Typography>
-                                    &nbsp;
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        justifyContent: "flex-end", // set justify content to flex-end
-                                        flexDirection: "row",
-                                      }}>
-                                      <Typography sx={{ color: "#232323" }}>
-                                        {messageList[item].timestamp}
-                                      </Typography>
-                                    </Box>
                                   </Box>
-                                </div>
-                              </Grid>
+                                </Box>
+                              </div>
                             </Grid>
-                          </Box>
-                        );
-                      }
-                    })}
-                  </Box>
+                          </Grid>
+                        </Box>
+                      );
+                    }
+                  })}
+                </Box>
 
-                  {/* Bottom Chat */}
-                  <Box
-                    sx={{
-                      backgroundColor: "#6e6e80",
-                      // px: 5,
-                      // py: 10,
-                      position: "fixed",
-                      bottom: 0,
-                      width: "75%",
-                      borderRadius: "50px",
-                      border: "none",
-                      display: "flex",
-                      alignItems: "center",
-                    }}>
-                    <TextField
-                      placeholder="Message"
-                      variant="filled"
-                      fullWidth
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          sendMessage();
-                        }
-                      }}
-                      sx={{ backgroundColor: "#fafafa" }}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment
-                            position="start"
-                            onClick={sendMessage}
-                            sx={{ cursor: "pointer" }}>
-                            <SendRoundedIcon />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Box>
-                </React.Fragment>
-              )}
-            </Grid>
+                {/* Bottom Chat */}
+                <Box
+                  sx={{
+                    backgroundColor: "#6e6e80",
+                    // px: 5,
+                    // py: 10,
+                    position: "fixed",
+                    bottom: 0,
+                    width: "75%",
+                    borderRadius: "50px",
+                    border: "none",
+                    display: "flex",
+                    alignItems: "center",
+                  }}>
+                  <TextField
+                    placeholder="Message"
+                    variant="filled"
+                    fullWidth
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        sendMessage();
+                      }
+                    }}
+                    sx={{ backgroundColor: "#fafafa" }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment
+                          position="start"
+                          onClick={sendMessage}
+                          sx={{ cursor: "pointer" }}>
+                          <SendRoundedIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Box>
+              </React.Fragment>
+            )}
           </Grid>
-        </main>
-      )}
+        </Grid>
+      </main>
     </>
   );
 }

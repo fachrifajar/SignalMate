@@ -111,7 +111,7 @@ const MyTextField = styled(TextField)({
   },
 });
 
-const Register = () => {
+const Register = (props) => {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = React.useState(false);
@@ -294,6 +294,7 @@ const Register = () => {
     // if (convertData) {
     //   router.replace("/");
     // }
+
     const validateAcc = props.profile;
 
     if (validateAcc) {
