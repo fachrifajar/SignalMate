@@ -6,11 +6,10 @@ import {
   update,
 } from "firebase/database";
 
-export const getData = (collection, cb) => {
+export const getData = (table, cb) => {
   const db = database;
-  const starCountRef = ref(db, collection);
-
-  return onValue(starCountRef, cb);
+  const starCountRef = ref(db, table);
+  onValue(starCountRef, cb);
 };
 
 export const sendData = (table, cb) => {

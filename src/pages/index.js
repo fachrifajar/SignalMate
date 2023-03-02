@@ -145,18 +145,31 @@ export default function Home(props) {
         useDb.getData(`users`, (snapshot) => {
           const data = snapshot.val();
 
-          const usersArray = Object.keys(data).map((userId) => {
-            return { ...data[userId] };
-          });
-          setAllUserData(usersArray);
-          SetCurrentUserData(data[uid]);
-          let targetData = data[uid];
+          if (data) {
+            const usersArray = Object.keys(data).map((userId) => {
+              return { ...data[userId] };
+            });
+            setAllUserData(usersArray);
+            SetCurrentUserData(data[uid]);
+            let targetData = data[uid];
 
-          for (let i = 0; i < usersArray.length; i++) {
-            for (let j = 0; j < targetData.friend_list.length; j++) {
-              if (usersArray[i].user_id == targetData.friend_list[j]) {
-                temp.push(usersArray[i]);
-                setValidFriendList(temp);
+            if (targetData.friend_list) {
+              for (let i = 0; i < usersArray.length; i++) {
+                for (let j = 0; j < targetData.friend_list.length; j++) {
+                  if (usersArray[i].user_id == targetData.friend_list[j]) {
+                    temp.push(usersArray[i]);
+                    setValidFriendList(temp);
+                  }
+                }
+              }
+            } else {
+              for (let i = 0; i < usersArray.length; i++) {
+                for (let j = 0; j < 1; j++) {
+                  if (usersArray[i].user_id == targetData.friend_list[j]) {
+                    temp.push(usersArray[i]);
+                    setValidFriendList(temp);
+                  }
+                }
               }
             }
           }
