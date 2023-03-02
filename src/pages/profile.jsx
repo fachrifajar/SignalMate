@@ -15,10 +15,10 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/router";
 import { updateData } from "@/config/database";
-import { useSelector, useDispatch } from "react-redux";
+// import { useSelector, useDispatch } from "react-redux";
 import { getCookies, getCookie, setCookie, deleteCookie } from "cookies-next";
-import { deleteAuthData } from "@/store/reducer/auth";
-import * as authRedux from "@/store/reducer/auth";
+// import { deleteAuthData } from "@/store/reducer/auth";
+// import * as authRedux from "@/store/reducer/auth";
 //MUI
 
 import { styled } from "@mui/material/styles";
@@ -60,12 +60,12 @@ const MyTextField = styled(TextField)({
   },
 });
 
-export default function Home(props) {
+export default function Home() {
   const router = useRouter();
-  const store = useSelector((state) => state);
-  console.log("storeee---", store);
+  // const store = useSelector((state) => state);
+  // console.log("storeee---", store);
   //REDUX
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   // let x= (props.profile);
   // console.log(JSON.parse(x))
@@ -111,9 +111,18 @@ export default function Home(props) {
   }, []);
 
   React.useEffect(() => {
-    const validateAcc = props.profile;
+    // const validateAcc = props.profile;
 
-    if (!validateAcc) {
+    // if (!validateAcc) {
+    //   router.replace("/auth/login");
+    // }
+
+    const getData = localStorage.getItem("user");
+    const convertData = JSON.parse(getData);
+
+    console.log("convertData....", convertData);
+
+    if (!convertData) {
       router.replace("/auth/login");
     }
   }, []);
@@ -322,13 +331,3 @@ export default function Home(props) {
     </>
   );
 }
-
-export const getServerSideProps = async (context) => {
-  const profile = getCookie("profile", context) || "";
-
-  return {
-    props: {
-      profile,
-    },
-  };
-};

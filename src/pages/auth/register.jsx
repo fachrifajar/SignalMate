@@ -11,9 +11,9 @@ import {
 } from "firebase/auth";
 import { auth } from "@/config/firebase";
 import * as useDb from "@/config/database";
-import { useSelector, useDispatch } from "react-redux";
+// import { useSelector, useDispatch } from "react-redux";
 import { getCookies, getCookie, setCookie, deleteCookie } from "cookies-next";
-import * as authRedux from "@/store/reducer/auth";
+// import * as authRedux from "@/store/reducer/auth";
 
 //
 import {
@@ -111,7 +111,7 @@ const MyTextField = styled(TextField)({
   },
 });
 
-const Register = (props) => {
+const Register = () => {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = React.useState(false);
@@ -286,20 +286,20 @@ const Register = (props) => {
   };
 
   React.useEffect(() => {
-    // const getData = localStorage.getItem("user");
-    // const convertData = JSON.parse(getData);
+    const getData = localStorage.getItem("user");
+    const convertData = JSON.parse(getData);
 
-    // console.log("convertData....", convertData);
+    console.log("convertData....", convertData);
 
-    // if (convertData) {
-    //   router.replace("/");
-    // }
-
-    const validateAcc = props.profile;
-
-    if (validateAcc) {
+    if (convertData) {
       router.replace("/");
     }
+
+    // const validateAcc = props.profile;
+
+    // if (validateAcc) {
+    //   router.replace("/");
+    // }
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -558,14 +558,14 @@ const Register = (props) => {
   );
 };
 
-export const getServerSideProps = async (context) => {
-  const profile = getCookie("profile", context) || "";
+// export const getServerSideProps = async (context) => {
+//   const profile = getCookie("profile", context) || "";
 
-  return {
-    props: {
-      profile,
-    },
-  };
-};
+//   return {
+//     props: {
+//       profile,
+//     },
+//   };
+// };
 
 export default Register;

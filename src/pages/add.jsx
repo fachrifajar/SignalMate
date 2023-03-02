@@ -15,10 +15,10 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/router";
 import { updateData } from "@/config/database";
-import { useSelector, useDispatch } from "react-redux";
+// import { useSelector, useDispatch } from "react-redux";
 import { getCookies, getCookie, setCookie, deleteCookie } from "cookies-next";
 import { deleteAuthData } from "@/store/reducer/auth";
-import * as authRedux from "@/store/reducer/auth";
+// import * as authRedux from "@/store/reducer/auth";
 //MUI
 
 import { styled } from "@mui/material/styles";
@@ -53,11 +53,11 @@ const MyTextField = styled(TextField)({
   },
 });
 
-export default function Home(props) {
+export default function Home() {
   const router = useRouter();
 
   //REDUX
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   const [currentUserData, SetCurrentUserData] = React.useState([]);
   const [allUserData, setAllUserData] = React.useState(null);
@@ -68,7 +68,7 @@ export default function Home(props) {
   const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [errMsg, setErrMsg] = React.useState("");
-  const [validFriendList, setValidFriendList] = React.useState([]);
+  // const [validFriendList, setValidFriendList] = React.useState([]);
 
   let temp = [];
 
@@ -87,14 +87,14 @@ export default function Home(props) {
           SetCurrentUserData(data[uid]);
           let targetData = data[uid];
 
-          for (let i = 0; i < usersArray.length; i++) {
-            for (let j = 0; j < targetData.friend_list.length; j++) {
-              if (usersArray[i].user_id == targetData.friend_list[j]) {
-                temp.push(usersArray[i]);
-                setValidFriendList(temp);
-              }
-            }
-          }
+          // for (let i = 0; i < usersArray.length; i++) {
+          //   for (let j = 0; j < targetData.friend_list.length; j++) {
+          //     if (usersArray[i].user_id == targetData.friend_list[j]) {
+          //       temp.push(usersArray[i]);
+          //       setValidFriendList(temp);
+          //     }
+          //   }
+          // }
         });
       } else {
         // User is signed out
@@ -207,9 +207,18 @@ export default function Home(props) {
   };
 
   React.useEffect(() => {
-    const validateAcc = props.profile;
+    // const validateAcc = props.profile;
 
-    if (!validateAcc) {
+    // if (!validateAcc) {
+    //   router.replace("/auth/login");
+    // }
+
+    const getData = localStorage.getItem("user");
+    const convertData = JSON.parse(getData);
+
+    console.log("convertData....", convertData);
+
+    if (!convertData) {
       router.replace("/auth/login");
     }
   }, []);
@@ -352,12 +361,12 @@ export default function Home(props) {
   );
 }
 
-export const getServerSideProps = async (context) => {
-  const profile = getCookie("profile", context) || "";
+// export const getServerSideProps = async (context) => {
+//   const profile = getCookie("profile", context) || "";
 
-  return {
-    props: {
-      profile,
-    },
-  };
-};
+//   return {
+//     props: {
+//       profile,
+//     },
+//   };
+// };

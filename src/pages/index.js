@@ -15,10 +15,16 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/router";
 import { updateData } from "@/config/database";
-import { useSelector, useDispatch } from "react-redux";
-import { getCookies, getCookie, setCookie, deleteCookie } from "cookies-next";
-import { deleteAuthData } from "@/store/reducer/auth";
-import * as authRedux from "@/store/reducer/auth";
+// import { useSelector, useDispatch } from "react-redux";
+import {
+  getCookies,
+  getCookie,
+  setCookie,
+  deleteCookie,
+  hasCookie,
+} from "cookies-next";
+// import { deleteAuthData } from "@/store/reducer/auth";
+// import * as authRedux from "@/store/reducer/auth";
 //MUI
 
 import { styled } from "@mui/material/styles";
@@ -92,11 +98,11 @@ const WordBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-export default function Home(props) {
+export default function Home() {
   const router = useRouter();
 
   //REDUX
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   // let x= (props.profile);
   // console.log(JSON.parse(x))
@@ -346,7 +352,7 @@ export default function Home(props) {
       .then(() => {
         localStorage.removeItem("user");
         deleteCookie("profile");
-        dispatch(deleteAuthData());
+        // dispatch(deleteAuthData());
 
         updateData(`/users/${currentUserData.user_id}/is_online`, false)
           .then(() => {
@@ -362,9 +368,16 @@ export default function Home(props) {
   };
 
   React.useEffect(() => {
-    const validateAcc = props.profile;
+    // const validateAcc = props.profile;
 
-    if (!validateAcc) {
+    // if (!validateAcc) {
+    //   router.replace("/auth/login");
+    // }
+
+    const getData = localStorage.getItem("user");
+    const convertData = JSON.parse(getData);
+
+    if (!convertData) {
       router.replace("/auth/login");
     }
   }, []);
@@ -847,12 +860,12 @@ export default function Home(props) {
   );
 }
 
-export const getServerSideProps = async (context) => {
-  const profile = getCookie("profile", context) || "";
+// export const getServerSideProps = async (context) => {
+//   const profile = getCookie("profile", context) || "";
 
-  return {
-    props: {
-      profile,
-    },
-  };
-};
+//   return {
+//     props: {
+//       profile,
+//     },
+//   };
+// };
