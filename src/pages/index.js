@@ -43,6 +43,7 @@ import {
   CardContent,
   Button,
   Alert,
+  useMediaQuery,
 } from "@mui/material";
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -382,6 +383,8 @@ export default function Home() {
     }
   }, []);
 
+  const isXs = useMediaQuery("(max-width: 600px)");
+
   return (
     <>
       <Head>
@@ -408,10 +411,12 @@ export default function Home() {
           <Grid
             item
             md={3}
+            xs={12}
             sx={{
               boxShadow: "1px 1px 5px 0px rgba(0,0,0,0.52)",
               backgroundColor: "#FFFFFF",
               height: "100vh",
+              display: isXs && isClicked ? "none" : "block",
             }}>
             <Container sx={{ mt: "20px" }}>
               <Typography
@@ -563,7 +568,10 @@ export default function Home() {
                         setSelectedChat(item);
                         updateNotif();
                       }}>
-                      <Box display="flex" alignItems="center">
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        sx={{ cursor: "pointer" }}>
                         {item.profile_picture !== "null" ? (
                           <img
                             alt="user photo"
@@ -658,7 +666,11 @@ export default function Home() {
             </Container>
           </Grid>
 
-          <Grid item md={9} sx={{ backgroundColor: "#DADADA" }}>
+          <Grid
+            item
+            md={9}
+            xs={isClicked ? 12 : null}
+            sx={{ backgroundColor: "#DADADA" }}>
             {!isClicked && (
               <Typography
                 sx={{
@@ -732,7 +744,7 @@ export default function Home() {
                               <div
                                 style={{
                                   display: "flex",
-                                  justifyContent: "flex-end", // set justify content to flex-end
+                                  justifyContent: "flex-end",
                                   flexDirection: "row",
                                 }}>
                                 <Box
@@ -777,7 +789,7 @@ export default function Home() {
                               <div
                                 style={{
                                   display: "flex",
-                                  justifyContent: "flex-start", // set justify content to flex-end
+                                  justifyContent: "flex-start",
                                   flexDirection: "row",
                                 }}>
                                 <Box
@@ -796,7 +808,7 @@ export default function Home() {
                                   <Box
                                     sx={{
                                       display: "flex",
-                                      justifyContent: "flex-end", // set justify content to flex-end
+                                      justifyContent: "flex-end",
                                       flexDirection: "row",
                                     }}>
                                     <Typography sx={{ color: "#232323" }}>
@@ -819,9 +831,9 @@ export default function Home() {
                     backgroundColor: "#6e6e80",
                     // px: 5,
                     // py: 10,
-                    position: "fixed",
-                    bottom: 0,
-                    width: "75%",
+                    position: { xs: "relative", md: "fixed" },
+                    bottom: { md: 0, xs: 15 },
+                    width: { md: "75%", xs: "100%" },
                     borderRadius: "50px",
                     border: "none",
                     display: "flex",
