@@ -219,14 +219,10 @@ const Login = () => {
         router.replace("/");
       })
       .catch((error) => {
-        // Handle Errors here.
         const errorCode = error.code;
         const errorMessage = error.message;
-        // The email of the user's account used.
-        // const email = error.customData.email;
-        // The AuthCredential type that was used.
+
         const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
       });
   };
 
@@ -290,7 +286,7 @@ const Login = () => {
           justifyContent="center"
           alignItems="center"
           height="100vh">
-          <Grid item xs={10} sm={8} md={6}>
+          <Grid item xs={12} sm={8} md={6}>
             <Card
               sx={{
                 width: "50vh",

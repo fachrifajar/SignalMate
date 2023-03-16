@@ -256,14 +256,10 @@ const Register = () => {
         router.push("/auth/login");
       })
       .catch((error) => {
-        // Handle Errors here.
         const errorCode = error.code;
         const errorMessage = error.message;
-        // The email of the user's account used.
-        // const email = error.customData.email;
-        // The AuthCredential type that was used.
+
         const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
       });
   };
 
@@ -331,7 +327,7 @@ const Register = () => {
           justifyContent="center"
           alignItems="center"
           height="100vh">
-          <Grid item xs={10} sm={8} md={6}>
+          <Grid item xs={12} sm={8} md={6}>
             <Card
               sx={{
                 width: "50vh",
@@ -367,20 +363,6 @@ const Register = () => {
                     Register
                   </span>
                 </Typography>
-
-                {/* <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{
-                    // color: "#232323",
-                    fontSize: 12,
-                    display: "flex",
-                    justtifyContent: "flex-start",
-                    top: 15,
-                    position: "relative",
-                  }}>
-                  Let’s create your account!
-                </Typography> */}
 
                 <MyModal open={showModal} onClose={handleClose}>
                   <MyCard>
