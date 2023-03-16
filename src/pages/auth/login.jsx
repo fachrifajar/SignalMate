@@ -296,6 +296,7 @@ const Login = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 borderRadius: "20px",
+                marginBottom: { xs: "100px" },
               }}>
               <CardContent
                 style={{
