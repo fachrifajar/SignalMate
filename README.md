@@ -9,6 +9,7 @@ SignalMate is a chat application that utilizes Firebase to provide secure, relia
 - Password recovery feature for easy account access.
 - Manual Add Friends (via Email Address).
 - Edit Profile
+- Realtime Notification
 
 ## **Getting Started**
 
