@@ -4,7 +4,7 @@ SignalMate is a chat application that utilizes Firebase to provide secure, relia
 
 ## **Features**  
 
-- Google authentication and email verification for a trusted.
+- Google authentication.
 - Email Verification.
 - Password recovery feature for easy account access.
 - Manual Add Friends (via Email Address).
